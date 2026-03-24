@@ -1,0 +1,125 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Roles for access control
+enum UserRole {
+  RESEARCHER
+  REVIEWER
+  ADMIN
+}
+
+// Paper progression status
+enum ProcessStatus {
+  ABSTRACT_SUBMISSION
+  INITIAL_EVALUATION
+  ACCEPTANCE_NOTIFICATION
+  PAYMENT_PENDING
+  CONFIRMED
+  FULL_PAPER_SUBMISSION
+  PEER_REVIEW
+  REVISION_REQUIRED
+  FINAL_DECISION
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String? // Profile Photo URL
+  password      String? // Hashed password (null for Google users)
+  role          UserRole  @default(RESEARCHER)
+
+  // Timestamps (Crucial for Admin Management sorting)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts  Account[]
+  sessions  Session[]
+  abstracts Abstract[]
+  reviews   Review[]   @relation("ReviewerDocs")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Abstract {
+  id        String        @id @default(cuid())
+  title     String
+  coAuthors String?
+  abstract  String        @db.Text
+  status    ProcessStatus @default(INITIAL_EVALUATION)
+
+  // Payment tracking fields
+  isPaid          Boolean @default(false)
+  paymentAmount   Float?
+  stripeSessionId String? @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId  String
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reviews Review[]
+}
+
+model Review {
+  id             String  @id @default(cuid())
+  rating         String? // Flexibile for 1-5 or text-based
+  comments       String  @db.Text
+  recommendation String // e.g., "ACCEPT", "REJECT", "PENDING"
+  isFinal        Boolean @default(false)
+
+  reviewerId String
+  reviewer   User     @relation("ReviewerDocs", fields: [reviewerId], references: [id])
+  abstractId String
+  abstract   Abstract @relation(fields: [abstractId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  token     String   @unique
+  expires   DateTime
+  createdAt DateTime @default(now())
+}

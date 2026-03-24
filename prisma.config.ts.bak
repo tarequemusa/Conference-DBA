@@ -1,0 +1,12 @@
+import { defineConfig } from "@prisma/config";
+
+export default defineConfig({
+  schema: {
+    kind: "local",
+    path: "prisma/schema.prisma",
+  },
+  migration: {
+    // This is where the connection URL goes now
+    url: process.env.DATABASE_URL,
+  },
+});

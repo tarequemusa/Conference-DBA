@@ -1,0 +1,43 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# --- CORE EXCLUSIONS ---
+node_modules/
+/node_modules
+.next/
+/.next/
+.env
+.env*.local
+.env.sample
+!.env.example
+
+# --- DEPENDENCIES ---
+/.pnp
+.pnp.js
+.yarn/install-state.gz
+
+# --- BUILD & OUTPUT ---
+dist/
+/out/
+/build
+/coverage
+*.tsbuildinfo
+next-env.d.ts
+
+# --- VERCEL ---
+.vercel
+
+# --- DATABASE & GENERATED ---
+/src/generated/prisma
+*.db
+*.db-journal
+
+# --- DEBUG & LOGS ---
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# --- SYSTEM FILES ---
+.DS_Store
+Thumbs.db
+*.pem
