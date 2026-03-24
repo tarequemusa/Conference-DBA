@@ -1,6 +1,6 @@
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
-import { authOptions } from "../../auth/[...nextauth]/route";
 
 // --- 1. GET: Fetch all users for the Management Table ---
 export async function GET() {
