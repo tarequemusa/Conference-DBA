@@ -55,7 +55,7 @@ export default function Hero() {
 
           {/* Slogan - Scaled for Viewport */}
           <p className="text-sm md:text-lg lg:text-xl text-slate-300 max-w-2xl mb-10 italic leading-relaxed opacity-90 px-4">
-            "Sustainability Focused Industry Trends in Global Research"
+            {`"Sustainability Focused Industry Trends in Global Research"`}
           </p>
 
           {/* Action Buttons */}

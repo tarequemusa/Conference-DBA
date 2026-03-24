@@ -271,7 +271,7 @@ export default function AuthModal({ isOpen, onClose, initialView = "login" }) {
                 Check Your Email
               </h3>
               <p className="text-slate-500 mt-4 px-6 text-sm">
-                We've sent a password recovery link to <br />
+                {`We've sent a password recovery link to`} <br />
                 <span className="font-bold text-[#003366]">
                   {formData.email}
                 </span>

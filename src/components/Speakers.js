@@ -81,7 +81,7 @@ export default function Keynotes() {
                     Talk Theme
                   </p>
                   <p className="text-sm md:text-base lg:text-lg font-bold text-white/90 leading-tight group-hover:text-[#C5A059] transition-colors line-clamp-2">
-                    "{speaker.talk}"
+                    {`"{speaker.talk}"`}
                   </p>
                 </div>
 
