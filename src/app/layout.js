@@ -4,9 +4,13 @@ import { Toaster } from "react-hot-toast";
 import "../styles/globals.css";
 
 export const metadata = {
-  title: "ICEBTM 2025 - EWU Conference",
-  description:
-    "International Conference on Economics, Business and Technology Management 2026",
+  title: "Conference DBA 2026",
+  description: "International Conference on Economics and Business",
+  icons: {
+    icon: "/favicon.ico", // Standard favicon
+    shortcut: "/favicon-32x32.png",
+    apple: "/apple-touch-icon.png", // For iOS home screen
+  },
 };
 
 export default function RootLayout({ children }) {
