@@ -37,7 +37,8 @@ export default function Footer() {
   };
 
   return (
-    <footer className="bg-[#003366] text-white pt-16 pb-12 md:pb-20 px-6 relative overflow-hidden border-t border-white/5">
+    /* Changed pb-12 to pb-36 and md:pb-20 to md:pb-24 to fix ticker overlap */
+    <footer className="bg-[#003366] text-white pt-16 pb-36 md:pb-24 px-6 relative overflow-hidden border-t border-white/5">
       {/* Subtle Ambient Glow */}
       <div className="absolute top-0 right-0 w-96 h-96 bg-[#C5A059]/10 rounded-full -mr-48 -mt-48 blur-[120px] pointer-events-none"></div>
 
@@ -172,13 +173,13 @@ export default function Footer() {
             href="/legal"
             className="hover:text-[#C5A059] transition-colors"
           >
-            Privacy
+            Privacy Policy
           </Link>
           <Link
             href="/legal"
             className="hover:text-[#C5A059] transition-colors"
           >
-            Terms
+            Terms of Service
           </Link>
         </div>
 
