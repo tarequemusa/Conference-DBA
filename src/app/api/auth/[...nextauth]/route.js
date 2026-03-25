@@ -27,8 +27,9 @@ export const authOptions = {
           where: { email: credentials.email.toLowerCase() },
         });
 
+        // Ensure user exists and has a password (not a Google-only user)
         if (!user || !user.password) {
-          throw new Error("No user found with this email");
+          throw new Error("Invalid credentials");
         }
 
         const isPasswordCorrect = await bcrypt.compare(
@@ -37,7 +38,7 @@ export const authOptions = {
         );
 
         if (!isPasswordCorrect) {
-          throw new Error("Incorrect password");
+          throw new Error("Invalid credentials");
         }
 
         return user;
@@ -47,22 +48,21 @@ export const authOptions = {
 
   callbacks: {
     async jwt({ token, user, trigger, session }) {
-      // 1. Initial sign-in
+      // 1. Initial sign-in: Capture initial user data
       if (user) {
         token.id = user.id;
         token.role = user.role;
-        token.picture = user.image;
+        token.email = user.email; // Ensure email is explicitly set
       }
 
-      // 2. Handle 'update' trigger from the frontend (Profile Page)
+      // 2. Handle 'update' trigger (Frontend Profile Updates)
       if (trigger === "update" && session) {
-        // This allows manual updates to reflect immediately
         if (session.name) token.name = session.name;
         if (session.image) token.picture = session.image;
         if (session.role) token.role = session.role;
       }
 
-      // 3. Database Sync: Fetch latest info to prevent stale data in Sidebar
+      // 3. Database Sync: Always fetch the freshest data using email
       if (token.email) {
         const dbUser = await prisma.user.findUnique({
           where: { email: token.email },
@@ -78,7 +78,7 @@ export const authOptions = {
           token.role = dbUser.role;
           token.id = dbUser.id;
           token.name = dbUser.name;
-          token.picture = dbUser.image; // Syncs the Profile Photo
+          token.picture = dbUser.image;
         }
       }
 
@@ -90,7 +90,8 @@ export const authOptions = {
         session.user.id = token.id;
         session.user.role = token.role;
         session.user.name = token.name;
-        session.user.image = token.picture; // Pass image to frontend session
+        session.user.image = token.picture;
+        session.user.email = token.email; // Pass email back to frontend session
       }
       return session;
     },

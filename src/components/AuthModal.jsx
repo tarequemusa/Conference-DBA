@@ -96,21 +96,72 @@ export default function AuthModal({ isOpen, onClose, initialView = "login" }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // 1. Validation Logic
+    const isCaptchaCorrect =
+      parseInt(captcha.userAns) === captcha.a + captcha.b;
+    if (!isCaptchaCorrect) {
+      toast.error("Mathematical verification failed.");
+      generateCaptcha();
+      return;
+    }
+
     setLoading(true);
 
-    // Submit logic simulation
-    setTimeout(() => {
-      setLoading(false);
-      // Reset captcha field after action
-      setCaptcha((prev) => ({ ...prev, userAns: "" }));
-
+    try {
+      // --- FORGOT PASSWORD VIEW ---
       if (view === "forgot") {
-        setIsEmailSent(true);
-      } else {
-        // Handle login/register success here
-        // toast.success("Action completed successfully");
+        const res = await fetch("/api/auth/forgot-password", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: formData.email }),
+        });
+        if (res.ok) {
+          setIsEmailSent(true);
+        } else {
+          const data = await res.json();
+          toast.error(data.error || "Failed to send reset link.");
+        }
       }
-    }, 1500);
+
+      // --- LOGIN VIEW ---
+      else if (view === "login") {
+        const res = await signIn("credentials", {
+          email: formData.email,
+          password: formData.password,
+          redirect: false,
+        });
+
+        if (res?.ok) {
+          toast.success("Login successful!");
+          window.location.href = "/dashboard";
+        } else {
+          toast.error(res?.error || "Invalid credentials.");
+        }
+      }
+
+      // --- SIGNUP VIEW ---
+      else if (view === "signup") {
+        const res = await fetch("/api/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        });
+
+        if (res.ok) {
+          toast.success("Registration successful! Please login.");
+          setView("login");
+        } else {
+          const data = await res.json();
+          toast.error(data.error || "Registration failed.");
+        }
+      }
+    } catch (error) {
+      toast.error("A connection error occurred.");
+    } finally {
+      setLoading(false);
+      setCaptcha((prev) => ({ ...prev, userAns: "" })); // Reset captcha input
+    }
   };
 
   return (
