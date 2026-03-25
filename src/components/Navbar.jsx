@@ -13,7 +13,7 @@ export default function Navbar() {
   const [authMode, setAuthMode] = useState("login");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [mounted, setMounted] = useState(false); // Prevents hydration flicker
+  const [mounted, setMounted] = useState(false);
 
   const scrollToSection = (id) => {
     const element = document.getElementById(id);
@@ -33,15 +33,11 @@ export default function Navbar() {
   };
 
   useEffect(() => {
-    setMounted(true); // Navbar is ready on client
+    setMounted(true);
     const handleScroll = () => {
-      // Logic check to handle various browser refresh behaviors
       setIsScrolled(window.scrollY > 20);
     };
-
-    // Check immediately on mount in case of refresh at middle of page
     handleScroll();
-
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -50,7 +46,6 @@ export default function Navbar() {
     document.body.style.overflow = isMobileMenuOpen ? "hidden" : "unset";
   }, [isMobileMenuOpen]);
 
-  // Hide Navbar until mounted to prevent the white block flicker during reload
   if (!mounted)
     return <div className="h-20 bg-transparent fixed top-0 w-full z-[100]" />;
 
@@ -81,7 +76,7 @@ export default function Navbar() {
                 alt="EWU Logo"
                 fill
                 className="object-contain p-1"
-                priority // Ensures logo loads immediately on reload
+                priority
               />
             </div>
             <div className="flex flex-col">
@@ -148,7 +143,6 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* Hamburger Icon */}
           <button
             className="lg:hidden p-2 rounded-lg text-white bg-white/5 border border-white/10 active:bg-white/10"
             onClick={() => setIsMobileMenuOpen(true)}
@@ -158,7 +152,7 @@ export default function Navbar() {
         </div>
       </nav>
 
-      {/* --- MOBILE DRAWER (UI Preserved Exactly) --- */}
+      {/* --- MOBILE DRAWER (Scrollable + Branded Header Fix) --- */}
       <div
         className={`fixed inset-0 w-full h-screen z-[150] lg:hidden transition-all duration-500 ${
           isMobileMenuOpen ? "visible" : "invisible"
@@ -172,67 +166,92 @@ export default function Navbar() {
         />
 
         <div
-          className={`absolute right-0 top-0 h-full w-[80%] max-w-[320px] bg-[#003366] shadow-2xl transition-transform duration-500 ease-in-out flex flex-col p-6 ${
+          className={`absolute right-0 top-0 h-full w-[85%] max-w-[340px] bg-[#003366] shadow-2xl transition-transform duration-500 ease-in-out flex flex-col ${
             isMobileMenuOpen ? "translate-x-0" : "translate-x-full"
           }`}
         >
-          <div className="flex justify-between items-center mb-10">
-            <span className="text-[#C5A059] font-black uppercase text-xs tracking-widest">
+          {/* BRANDED HEADER (As per attached image) */}
+          <div className="flex flex-col p-6 shrink-0 border-b border-white/5">
+            <div className="flex justify-between items-start mb-6">
+              <div className="flex items-center gap-3">
+                <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-white/10 p-1 border border-white/10">
+                  <Image
+                    src="/images/logo.png"
+                    alt="EWU Logo"
+                    fill
+                    className="object-contain"
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <h2 className="text-white font-black text-sm leading-none tracking-tight uppercase">
+                    CONFERENCE <span className="text-[#C5A059]">DBA</span>
+                  </h2>
+                  <span className="text-white/40 text-[8px] tracking-[0.15em] mt-1 font-bold">
+                    INTERNATIONAL 2026
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 text-white/50 hover:text-white transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <span className="text-[#C5A059] font-black uppercase text-[10px] tracking-[0.3em]">
               Navigation
             </span>
-            <button
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 text-white"
-            >
-              <X size={24} />
-            </button>
           </div>
 
-          <div className="flex-grow overflow-y-auto space-y-4 pr-1 custom-scrollbar">
-            {navLinks.map((link) => (
-              <button
-                key={link.id}
-                onClick={() => scrollToSection(link.id)}
-                className="w-full flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/5 text-white text-lg font-bold hover:bg-[#C5A059] hover:text-[#003366] transition-all group"
-              >
-                {link.name}
-                <div className="w-1.5 h-1.5 rounded-full bg-[#C5A059] shadow-[0_0_8px_#C5A059]" />
-              </button>
-            ))}
-          </div>
+          {/* Scrollable Container */}
+          <div className="flex-grow overflow-y-auto custom-scrollbar px-6 pb-10">
+            <div className="space-y-3 mt-6 mb-10">
+              {navLinks.map((link) => (
+                <button
+                  key={link.id}
+                  onClick={() => scrollToSection(link.id)}
+                  className="w-full flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/5 text-white text-base font-bold hover:bg-[#C5A059] hover:text-[#003366] transition-all group"
+                >
+                  {link.name}
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#C5A059] shadow-[0_0_8px_#C5A059]" />
+                </button>
+              ))}
+            </div>
 
-          <div className="mt-8 pt-6 border-t border-white/10 flex flex-col gap-3">
-            {!session ? (
-              <>
+            {/* Action Buttons */}
+            <div className="pt-6 border-t border-white/10 flex flex-col gap-3">
+              {!session ? (
+                <>
+                  <button
+                    onClick={() => {
+                      setAuthMode("signup");
+                      setIsAuthOpen(true);
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="w-full bg-[#C5A059] text-[#003366] py-4 rounded-xl font-black uppercase tracking-widest text-[11px] shadow-xl active:scale-95"
+                  >
+                    Join Now
+                  </button>
+                  <button
+                    onClick={() => {
+                      setAuthMode("login");
+                      setIsAuthOpen(true);
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="w-full bg-white/5 text-white py-4 rounded-xl font-black uppercase tracking-widest text-[11px] border border-white/10 active:scale-95"
+                  >
+                    Login
+                  </button>
+                </>
+              ) : (
                 <button
-                  onClick={() => {
-                    setAuthMode("signup");
-                    setIsAuthOpen(true);
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className="w-full bg-[#C5A059] text-[#003366] py-4 rounded-xl font-bold uppercase tracking-widest text-[11px] shadow-xl active:scale-95"
+                  onClick={() => signOut()}
+                  className="w-full bg-red-500/10 text-red-400 py-4 rounded-xl font-bold uppercase tracking-widest text-[11px] flex items-center justify-center gap-2 border border-red-500/10"
                 >
-                  Join Now
+                  <LogOut size={16} /> Logout
                 </button>
-                <button
-                  onClick={() => {
-                    setAuthMode("login");
-                    setIsAuthOpen(true);
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className="w-full bg-white/5 text-white py-4 rounded-xl font-bold uppercase tracking-widest text-[11px] border border-white/10 active:scale-95"
-                >
-                  Login
-                </button>
-              </>
-            ) : (
-              <button
-                onClick={() => signOut()}
-                className="w-full bg-red-500/10 text-red-400 py-4 rounded-xl font-bold uppercase tracking-widest text-[11px] flex items-center justify-center gap-2 border border-red-500/10"
-              >
-                <LogOut size={16} /> Logout
-              </button>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </div>
