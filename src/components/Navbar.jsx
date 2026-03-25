@@ -78,7 +78,7 @@ export default function Navbar() {
             <div className="relative aspect-square w-10 h-10 md:w-14 md:h-14 rounded-xl overflow-hidden p-1.5 transition-all duration-500 bg-white/5 group-hover:scale-105 border border-white/10">
               <Image
                 src="/images/logo.png"
-                alt="ICEBTM Logo"
+                alt="EWU Logo"
                 fill
                 className="object-contain p-1"
                 priority // Ensures logo loads immediately on reload
