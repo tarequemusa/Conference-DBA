@@ -1,5 +1,5 @@
 // import {sendEmail} from "@/lib/mailer"; // Your email helper
-import { sendEmail } from "@/lib/node_mailer";
+import { sendEmail } from "@/lib/mail";
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
