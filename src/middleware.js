@@ -4,15 +4,12 @@ import { NextResponse } from "next/server";
 export default withAuth(
   function middleware(req) {
     const token = req.nextauth.token;
-    const isAuth = !!token;
     const { pathname } = req.nextUrl;
 
-    // 1. Define Role-Based Access Rules
+    // 1. Role Protection Logic
     const isAdminPage = pathname.startsWith("/admin");
     const isReviewerPage = pathname.startsWith("/reviewer");
-    const isResearcherPage = pathname.startsWith("/dashboard");
 
-    // 2. Protection Logic
     if (isAdminPage && token?.role !== "ADMIN") {
       return NextResponse.redirect(new URL("/dashboard", req.url));
     }
@@ -25,27 +22,31 @@ export default withAuth(
       return NextResponse.redirect(new URL("/dashboard", req.url));
     }
 
-    // Optional: If a user is logged in but tries to hit the login/landing page
-    if (pathname === "/" && isAuth) {
-      return NextResponse.redirect(new URL("/dashboard", req.url));
-    }
-
     return NextResponse.next();
   },
   {
     callbacks: {
-      // This ensures the middleware only runs if the user is authenticated
+      // Only run the function above if a token exists
       authorized: ({ token }) => !!token,
     },
   },
 );
 
-// 3. Define which routes this middleware should protect
 export const config = {
   matcher: [
+    /*
+     * 🚀 CRITICAL FIX:
+     * Exclude the following paths from middleware to prevent redirect loops:
+     * - api/auth (NextAuth internal routes)
+     * - _next (Static files)
+     * - images, favicon, etc.
+     * - The root "/" path (where your AuthModal/Login lives)
+     */
+    "/((?!api/auth|_next/static|_next/image|favicon.ico|images|logo.png|auth|$).*)",
+
+    // Explicitly protect these route groups
     "/dashboard/:path*",
     "/admin/:path*",
     "/reviewer/:path*",
-    // Add other protected routes here
   ],
 };

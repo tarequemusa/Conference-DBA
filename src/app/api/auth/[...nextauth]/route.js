@@ -11,6 +11,8 @@ export const authOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+      // Allow Google to link to existing accounts with the same email
+      allowDangerousEmailAccountLinking: true,
     }),
     CredentialsProvider({
       name: "credentials",
@@ -28,7 +30,7 @@ export const authOptions = {
         });
 
         if (!user || !user.password) {
-          throw new Error("Invalid credentials");
+          throw new Error("No user found with this email");
         }
 
         const isPasswordCorrect = await bcrypt.compare(
@@ -37,7 +39,7 @@ export const authOptions = {
         );
 
         if (!isPasswordCorrect) {
-          throw new Error("Invalid credentials");
+          throw new Error("Incorrect password");
         }
 
         return user;
@@ -47,41 +49,33 @@ export const authOptions = {
 
   callbacks: {
     async jwt({ token, user, trigger, session }) {
-      // 1. Initial sign-in
+      // 1. Initial sign-in: Capture everything into the JWT
       if (user) {
         token.id = user.id;
         token.role = user.role;
         token.email = user.email;
-        token.signature = user.signature; // Capture initial signature
+        token.signature = user.signature;
+        token.name = user.name;
+        token.picture = user.image;
       }
 
-      // 2. Handle 'update' trigger (Frontend Profile Updates)
+      // 2. Handle 'update' trigger (Manually called from frontend)
+      // This avoids constant database hits by updating the token only when needed
       if (trigger === "update" && session) {
-        if (session.name) token.name = session.name;
-        if (session.image) token.picture = session.image;
-        if (session.role) token.role = session.role;
-        if (session.signature) token.signature = session.signature; // Update signature in token
+        return { ...token, ...session };
       }
 
-      // 3. Database Sync: Always fetch the freshest data
-      if (token.email) {
+      // 3. OPTIONAL: Periodic Sync (Better than every request)
+      // Only fetch from DB if the role or critical data is missing
+      if (!token.role && token.email) {
         const dbUser = await prisma.user.findUnique({
           where: { email: token.email },
-          select: {
-            role: true,
-            id: true,
-            name: true,
-            image: true,
-            signature: true, // Fetch signature from DB
-          },
+          select: { role: true, signature: true, image: true },
         });
-
         if (dbUser) {
           token.role = dbUser.role;
-          token.id = dbUser.id;
-          token.name = dbUser.name;
+          token.signature = dbUser.signature;
           token.picture = dbUser.image;
-          token.signature = dbUser.signature; // Sync signature
         }
       }
 
@@ -95,7 +89,7 @@ export const authOptions = {
         session.user.name = token.name;
         session.user.image = token.picture;
         session.user.email = token.email;
-        session.user.signature = token.signature; // Pass signature to frontend session
+        session.user.signature = token.signature;
       }
       return session;
     },
@@ -103,11 +97,15 @@ export const authOptions = {
 
   session: {
     strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 Days
   },
   pages: {
-    signIn: "/",
+    signIn: "/", // Redirects to home for login
+    error: "/", // Redirects to home on auth error
   },
+  // Ensure your NEXTAUTH_SECRET is set in .env
   secret: process.env.NEXTAUTH_SECRET,
+  debug: process.env.NODE_ENV === "development",
 };
 
 const handler = NextAuth(authOptions);

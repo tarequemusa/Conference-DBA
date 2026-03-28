@@ -7,17 +7,31 @@ export async function POST(req) {
   try {
     const { token, password } = await req.json();
 
-    const resetToken = await prisma.passwordResetToken.findUnique({
-      where: { token: token.trim() },
-    });
-
-    if (!resetToken || resetToken.expires < new Date()) {
+    if (!token || !password) {
       return NextResponse.json(
-        { error: "Invalid or expired recovery link" },
+        { error: "Missing required fields" },
         { status: 400 },
       );
     }
 
+    // 1. Find the token
+    const resetToken = await prisma.passwordResetToken.findFirst({
+      where: {
+        token: token.trim(),
+        expires: { gt: new Date() }, // Find only if not expired
+      },
+    });
+
+    if (!resetToken) {
+      return NextResponse.json(
+        {
+          error: "Invalid or expired recovery link. Please request a new one.",
+        },
+        { status: 400 },
+      );
+    }
+
+    // 2. Hash and Update
     const hashedPassword = await bcrypt.hash(password, 12);
 
     await prisma.$transaction([
@@ -25,12 +39,12 @@ export async function POST(req) {
         where: { email: resetToken.email },
         data: { password: hashedPassword },
       }),
-      prisma.passwordResetToken.delete({
-        where: { token: resetToken.token },
+      prisma.passwordResetToken.deleteMany({
+        where: { email: resetToken.email }, // Clear all tokens for this user
       }),
     ]);
 
-    // Send Security Notification
+    // 3. Branded Security Notification (Matching your UI)
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
@@ -40,20 +54,19 @@ export async function POST(req) {
     });
 
     await transporter.sendMail({
-      from: `"ICEBTM Security" <${process.env.EMAIL_USER}>`,
+      from: `"Conference DBA Security" <${process.env.EMAIL_USER}>`,
       to: resetToken.email,
-      subject: "Security Alert: Your password was changed",
+      subject: "Security Alert: Password Changed",
       html: `
-        <div style="font-family: sans-serif; max-width: 600px; margin: auto; border: 1px solid #eee; border-radius: 10px; overflow: hidden;">
-          <div style="background-color: #003366; padding: 20px; text-align: center;">
-            <h1 style="color: #C5A059; margin: 0;">Security Notification</h1>
-          </div>
-          <div style="padding: 30px; color: #333;">
-            <p>Hello,</p>
-            <p>Your password for the <strong>ICEBTM 2026 Portal</strong> was recently updated.</p>
-            <p>If you did not make this change, please contact support immediately.</p>
-            <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
-            <p style="font-size: 12px; color: #999; text-align: center;">© 2026 EWU Conference Committee</p>
+        <div style="background-color: #f8fafc; padding: 40px 10px; font-family: sans-serif;">
+          <div style="max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 32px; overflow: hidden; border: 1px solid #e2e8f0;">
+            <div style="background-color: #003366; padding: 20px; text-align: center;">
+               <h2 style="color: #C5A059; margin: 0; text-transform: uppercase; font-size: 16px;">Security Update</h2>
+            </div>
+            <div style="padding: 40px; text-align: center;">
+              <p style="color: #1e293b; font-size: 16px; font-weight: 600;">Your password was successfully updated.</p>
+              <p style="color: #64748b; font-size: 14px;">If you did not perform this action, please secure your account immediately.</p>
+            </div>
           </div>
         </div>
       `,
