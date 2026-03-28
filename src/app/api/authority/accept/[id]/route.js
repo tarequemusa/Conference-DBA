@@ -1,5 +1,5 @@
 // import {sendEmail} from "@/lib/mailer"; // Your email helper
-import { sendEmail } from "@/lib/mail";
+import { sendDecisionEmail as sendEmail } from "@/lib/mail"; // ✅ Aliased to keep the code below the same
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
@@ -13,15 +13,18 @@ export async function PATCH(req, { params }) {
       include: { user: true },
     });
 
-    // Trigger Automated Email
-    await sendEmail({
-      to: updated.user.email,
-      subject: "Abstract Accepted - Conference DBA 2026",
-      text: `Congratulations ${updated.user.name}, your abstract "${updated.title}" has been accepted. Please proceed to payment.`,
-    });
+    // 🚀 Trigger Automated Email with correct arguments for mail.js
+    await sendEmail(
+      updated.user.email, // to
+      updated.user.name, // researcherName
+      updated.title, // paperTitle
+      "ACCEPT", // decision
+      "Congratulations! Your abstract has been accepted. Please proceed to payment.", // comments
+    );
 
     return NextResponse.json({ message: "Researcher Notified & Accepted" });
   } catch (error) {
+    console.error("Email/Update Error:", error);
     return NextResponse.json({ error: "Action failed" }, { status: 500 });
   }
 }
