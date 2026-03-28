@@ -3,6 +3,30 @@ import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 
+// 🚀 NEW: PATCH Handler to assign slots
+export async function PATCH(req, { params }) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || session.user.role !== "ADMIN") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { id } = await params;
+    const { scheduledSlot } = await req.json(); // e.g., "slot-1"
+
+    const updated = await prisma.abstract.update({
+      where: { id: id },
+      data: { scheduledSlot: scheduledSlot },
+    });
+
+    return NextResponse.json({ success: true, data: updated });
+  } catch (error) {
+    console.error("PATCH_SLOT_ERROR:", error);
+    return NextResponse.json({ error: "Update failed" }, { status: 500 });
+  }
+}
+
+// 🏛️ GET Handler remains exactly as provided
 export async function GET(req, { params }) {
   try {
     const session = await getServerSession(authOptions);
@@ -21,7 +45,6 @@ export async function GET(req, { params }) {
         reviews: {
           orderBy: { createdAt: "desc" },
           include: {
-            // We keep this because 'Review' model likely HAS a 'reviewer' relation
             reviewer: { select: { name: true } },
           },
         },
@@ -33,7 +56,6 @@ export async function GET(req, { params }) {
     }
 
     // MANUALLY FETCH REVIEWER DATA IF reviewerId EXISTS
-    // This bypasses the 'include' error you are seeing
     let reviewerInfo = null;
     if (abstractData.reviewerId) {
       reviewerInfo = await prisma.user.findUnique({

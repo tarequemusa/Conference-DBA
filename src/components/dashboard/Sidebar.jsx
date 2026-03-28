@@ -2,6 +2,7 @@
 import {
   Award,
   BarChart3,
+  Calendar, // 🚀 NEW ICON
   CheckCircle,
   ClipboardCheck,
   CreditCard,
@@ -42,6 +43,7 @@ export default function Sidebar() {
     { name: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
     { name: "Submit Abstract", icon: PlusCircle, path: "/dashboard/submit" },
     { name: "My Abstracts", icon: FileText, path: "/dashboard/abstracts" },
+    { name: "Event Timeline", icon: Calendar, path: "/dashboard/schedule" }, // 🚀 INTEGRATED
     { name: "Certificates", icon: Award, path: "/dashboard/certificates" },
   ];
 
@@ -62,6 +64,7 @@ export default function Sidebar() {
   const adminItems = [
     { name: "Admin Console", icon: ShieldCheck, path: "/admin" },
     { name: "Manage Abstracts", icon: BarChart3, path: "/admin/abstracts" },
+    { name: "Event Schedule", icon: Calendar, path: "/admin/schedule" }, // 🚀 UPDATED: Pointing to Architect
     { name: "Finance & Revenue", icon: CreditCard, path: "/admin/finance" },
     { name: "User Management", icon: Users, path: "/admin/users" },
     { name: "Activity Logs", icon: History, path: "/admin/logs" },
@@ -191,7 +194,6 @@ export default function Sidebar() {
         {/* User Profile & Logout Section */}
         <div className="pt-6 border-t border-white/10 mt-auto">
           <div className="flex items-center gap-3 px-2 mb-6 text-left">
-            {/* --- PROFILE IMAGE LOGIC --- */}
             {session?.user?.image ? (
               <div className="relative w-10 h-10 shrink-0">
                 <Image

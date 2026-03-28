@@ -6,7 +6,7 @@ export default withAuth(
     const token = req.nextauth.token;
     const { pathname } = req.nextUrl;
 
-    // 1. Role Protection Logic
+    // Role-Based Protection
     const isAdminPage = pathname.startsWith("/admin");
     const isReviewerPage = pathname.startsWith("/reviewer");
 
@@ -19,6 +19,10 @@ export default withAuth(
       token?.role !== "REVIEWER" &&
       token?.role !== "ADMIN"
     ) {
+      return NextResponse.next(); // Allow Admins to see Reviewer pages
+    }
+
+    if (isReviewerPage && token?.role !== "REVIEWER") {
       return NextResponse.redirect(new URL("/dashboard", req.url));
     }
 
@@ -26,7 +30,6 @@ export default withAuth(
   },
   {
     callbacks: {
-      // Only run the function above if a token exists
       authorized: ({ token }) => !!token,
     },
   },
@@ -35,14 +38,19 @@ export default withAuth(
 export const config = {
   matcher: [
     /*
-     * 🚀 CRITICAL FIX:
-     * Exclude the following paths from middleware to prevent redirect loops:
-     * - api/auth (NextAuth internal routes)
-     * - _next (Static files)
-     * - images, favicon, etc.
-     * - The root "/" path (where your AuthModal/Login lives)
+     * Match all request paths except for the ones starting with:
+     * - api/auth (NextAuth internals)
+     * - api/schedule (Public API)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - images (public images)
+     * - logo.png (branded logo)
+     * - schedule (The public timeline page)
+     * - legal (🚀 ADDED: The public legal page)
+     * - $ (The root/landing page)
      */
-    "/((?!api/auth|_next/static|_next/image|favicon.ico|images|logo.png|auth|$).*)",
+    "/((?!api/auth|api/schedule|_next/static|_next/image|favicon.ico|images|logo.png|schedule|legal|$).*)",
 
     // Explicitly protect these route groups
     "/dashboard/:path*",

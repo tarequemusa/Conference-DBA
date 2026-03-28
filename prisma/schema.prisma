@@ -101,6 +101,8 @@ model Abstract {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  scheduledSlot  String?  // References "slot-1", "slot-2", etc.
+
   userId     String
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   reviews    Review[]

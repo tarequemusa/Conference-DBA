@@ -71,7 +71,7 @@ export const sendReviewAssignmentEmail = async (
         <p>You have been assigned a new manuscript for peer review by the Conference Authority.</p>
         
         <div style="background: #f8fafc; padding: 20px; border-left: 4px solid #003366; margin: 20px 0;">
-          <p style="margin: 0; font-[10px] font-weight: bold; color: #64748b; text-transform: uppercase; letter-spacing: 0.1em;">Manuscript Title</p>
+          <p style="margin: 0; font-size: 10px font-weight: bold; color: #64748b; text-transform: uppercase; letter-spacing: 0.1em;">Manuscript Title</p>
           <p style="margin: 5px 0 0 0; font-size: 16px; font-weight: bold; color: #001A41;">${paperTitle}</p>
         </div>
 

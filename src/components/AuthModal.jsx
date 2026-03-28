@@ -44,7 +44,12 @@ export default function AuthModal({ isOpen, onClose, initialView = "login" }) {
 
   useEffect(() => {
     if (isOpen) {
-      setView(initialView);
+      // 🚀 Detect submission intent and route to signup
+      if (initialView === "submission") {
+        setView("signup");
+      } else {
+        setView(initialView);
+      }
       setIsEmailSent(false);
       setLegalView(null);
       setShowPassword(false);
@@ -68,10 +73,7 @@ export default function AuthModal({ isOpen, onClose, initialView = "login" }) {
     },
   };
 
-  // --- SUBMISSION VALIDATION LOGIC ---
   const isCaptchaCorrect = parseInt(captcha.userAns) === captcha.a + captcha.b;
-
-  // Submit is disabled if: loading OR captcha is wrong OR (it's signup and terms not agreed)
   const isSubmitDisabled =
     loading || !isCaptchaCorrect || (view === "signup" && !agreed);
 
@@ -83,7 +85,6 @@ export default function AuthModal({ isOpen, onClose, initialView = "login" }) {
         redirect: false,
       });
       if (result?.ok) {
-        // Reset captcha field after success
         setCaptcha((prev) => ({ ...prev, userAns: "" }));
         window.location.href = "/dashboard";
       }
@@ -96,8 +97,6 @@ export default function AuthModal({ isOpen, onClose, initialView = "login" }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // 1. Validation Logic
     const isCaptchaCorrect =
       parseInt(captcha.userAns) === captcha.a + captcha.b;
     if (!isCaptchaCorrect) {
@@ -107,47 +106,36 @@ export default function AuthModal({ isOpen, onClose, initialView = "login" }) {
     }
 
     setLoading(true);
-
     try {
-      // --- FORGOT PASSWORD VIEW ---
       if (view === "forgot") {
         const res = await fetch("/api/auth/forgot-password", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email: formData.email }),
         });
-        if (res.ok) {
-          setIsEmailSent(true);
-        } else {
+        if (res.ok) setIsEmailSent(true);
+        else {
           const data = await res.json();
           toast.error(data.error || "Failed to send reset link.");
         }
-      }
-
-      // --- LOGIN VIEW ---
-      else if (view === "login") {
+      } else if (view === "login") {
         const res = await signIn("credentials", {
           email: formData.email,
           password: formData.password,
           redirect: false,
         });
-
         if (res?.ok) {
           toast.success("Login successful!");
           window.location.href = "/dashboard";
         } else {
           toast.error(res?.error || "Invalid credentials.");
         }
-      }
-
-      // --- SIGNUP VIEW ---
-      else if (view === "signup") {
+      } else if (view === "signup") {
         const res = await fetch("/api/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(formData),
         });
-
         if (res.ok) {
           toast.success("Registration successful! Please login.");
           setView("login");
@@ -160,18 +148,15 @@ export default function AuthModal({ isOpen, onClose, initialView = "login" }) {
       toast.error("A connection error occurred.");
     } finally {
       setLoading(false);
-      setCaptcha((prev) => ({ ...prev, userAns: "" })); // Reset captcha input
+      setCaptcha((prev) => ({ ...prev, userAns: "" }));
     }
   };
 
   return (
     <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm overflow-hidden">
       <div
-        className={`bg-white w-full transition-all duration-500 ease-in-out ${
-          view === "signup" ? "max-w-[950px]" : "max-w-[450px]"
-        } rounded-[2rem] shadow-2xl overflow-hidden relative flex flex-col animate-in fade-in zoom-in duration-300 max-h-[95vh] my-auto`}
+        className={`bg-white w-full transition-all duration-500 ease-in-out ${view === "signup" ? "max-w-[950px]" : "max-w-[450px]"} rounded-[2rem] shadow-2xl overflow-hidden relative flex flex-col animate-in fade-in zoom-in duration-300 max-h-[95vh] my-auto`}
       >
-        {/* --- BRANDED FIXED HEADER --- */}
         <div className="w-full bg-[#003366] p-4 flex items-center justify-between border-b border-white/10 shrink-0">
           <div className="flex items-center gap-3">
             <div className="bg-white/10 p-1.5 rounded-lg backdrop-blur-sm">
@@ -199,7 +184,6 @@ export default function AuthModal({ isOpen, onClose, initialView = "login" }) {
         </div>
 
         <div className="flex flex-col md:flex-row flex-grow overflow-y-auto custom-scrollbar relative">
-          {/* --- NESTED LEGAL MODAL OVERLAY --- */}
           {legalView && (
             <div className="absolute inset-0 z-[120] bg-[#003366] text-white p-8 md:p-16 animate-in slide-in-from-bottom duration-500 flex flex-col justify-center overflow-y-auto">
               <button
@@ -237,7 +221,6 @@ export default function AuthModal({ isOpen, onClose, initialView = "login" }) {
             </div>
           )}
 
-          {/* LEFT SIDE PANEL (SIGNUP ONLY) */}
           {view === "signup" && (
             <div className="hidden md:flex md:w-5/12 bg-[#003366]/95 p-12 text-white flex flex-col justify-center border-r border-white/5 shrink-0 animate-in slide-in-from-left duration-500">
               <h2 className="text-2xl font-black uppercase tracking-tight mb-8">
@@ -265,36 +248,29 @@ export default function AuthModal({ isOpen, onClose, initialView = "login" }) {
             </div>
           )}
 
-          {/* FORM SECTION */}
           <div
             className={`${view === "signup" ? "md:w-7/12" : "w-full"} p-8 md:p-12 bg-white flex flex-col justify-center`}
           >
             {isEmailSent ? (
               <div className="flex flex-col items-center justify-center py-12 px-6 text-center animate-in fade-in zoom-in duration-500 min-h-[400px] bg-[#003366] rounded-[2rem]">
-                {/* Animated Gold Checkmark Circle */}
                 <div className="relative w-20 h-20 mb-8">
                   <div className="absolute inset-0 bg-[#C5A059]/20 rounded-full animate-ping"></div>
                   <div className="relative w-20 h-20 bg-[#C5A059]/10 border-2 border-[#C5A059] rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(197,160,89,0.3)]">
                     <CheckCircle2 size={40} className="text-[#C5A059]" />
                   </div>
                 </div>
-
-                {/* Typography matches image_b32362.png */}
                 <h3 className="text-3xl font-black text-white uppercase tracking-[0.1em] mb-4">
                   SENT!
                 </h3>
-
                 <p className="text-slate-300 text-base font-medium leading-relaxed max-w-[280px] mx-auto mb-10">
                   Your request has been received. A recovery email has been sent
                   to your inbox.
                 </p>
-
-                {/* Brand Action Link */}
                 <button
                   onClick={() => {
                     setIsEmailSent(false);
                     setView("login");
-                    generateCaptcha(); // Reset captcha for next attempt
+                    generateCaptcha();
                   }}
                   className="text-[#C5A059] font-black text-xs uppercase tracking-[0.2em] hover:text-white transition-all underline underline-offset-8 decoration-1"
                 >
@@ -313,22 +289,25 @@ export default function AuthModal({ isOpen, onClose, initialView = "login" }) {
                     </button>
                   )}
                   <h3 className="text-xl md:text-2xl font-black text-[#003366] uppercase tracking-tighter leading-none">
-                    {view === "login"
-                      ? "Researcher Login"
-                      : view === "signup"
-                        ? "Create Account"
-                        : "Recover Password"}
+                    {initialView === "submission"
+                      ? "Welcome Researcher"
+                      : view === "login"
+                        ? "Researcher Login"
+                        : view === "signup"
+                          ? "Create Account"
+                          : "Recover Password"}
                   </h3>
                   <p className="text-slate-500 text-xs font-medium mt-1 uppercase italic">
-                    {view === "login"
-                      ? "Access your dashboard"
-                      : view === "signup"
-                        ? "Register for Conference DBA 2026"
-                        : "Reset your link"}
+                    {initialView === "submission"
+                      ? "Register to begin your submission"
+                      : view === "login"
+                        ? "Access your dashboard"
+                        : view === "signup"
+                          ? "Register for Conference DBA 2026"
+                          : "Reset your link"}
                   </p>
                 </div>
 
-                {/* GOOGLE SIGN IN PRESERVED */}
                 {view !== "forgot" && (
                   <button
                     onClick={handleGoogleSignIn}
@@ -396,7 +375,6 @@ export default function AuthModal({ isOpen, onClose, initialView = "login" }) {
                       </button>
                     </div>
                   )}
-
                   {view === "login" && (
                     <button
                       type="button"
@@ -406,8 +384,6 @@ export default function AuthModal({ isOpen, onClose, initialView = "login" }) {
                       Forgot Password?
                     </button>
                   )}
-
-                  {/* --- MATH CAPTCHA --- */}
                   <div className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-xl">
                     <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-lg border border-slate-100 shadow-sm shrink-0">
                       <span className="text-sm font-black text-[#003366] tracking-widest">
@@ -432,8 +408,6 @@ export default function AuthModal({ isOpen, onClose, initialView = "login" }) {
                       <RotateCcw size={16} />
                     </button>
                   </div>
-
-                  {/* AGREEMENT CHECKBOX: ONLY FOR SIGNUP */}
                   {view === "signup" && (
                     <div className="flex items-center gap-3 px-1">
                       <input
@@ -466,7 +440,6 @@ export default function AuthModal({ isOpen, onClose, initialView = "login" }) {
                       </label>
                     </div>
                   )}
-
                   <button
                     disabled={isSubmitDisabled}
                     className={`w-full py-4 rounded-xl font-black shadow-xl transition-all flex items-center justify-center gap-2 active:scale-95 text-sm uppercase tracking-widest disabled:opacity-40 disabled:cursor-not-allowed ${view === "signup" ? "bg-[#C5A059] text-[#003366]" : "bg-[#003366] text-white"}`}
@@ -482,8 +455,6 @@ export default function AuthModal({ isOpen, onClose, initialView = "login" }) {
                     )}
                   </button>
                 </form>
-
-                {/* NAVIGATION LINKS WITH BRAND COLOR */}
                 <div className="mt-8 text-center">
                   <button
                     onClick={() =>

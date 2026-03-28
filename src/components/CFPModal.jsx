@@ -49,9 +49,8 @@ export default function CFPModal({ isOpen, onClose, onStartSubmission }) {
 
         {/* --- MODAL CONTENT BODY (Scrollable) --- */}
         <div className="flex flex-col md:flex-row overflow-y-auto custom-scrollbar flex-grow">
-          {/* Left Panel: Branded Sidebar (Now visible on mobile) */}
+          {/* Left Panel: Branded Sidebar */}
           <div className="w-full md:w-5/12 bg-[#003366] p-8 md:p-12 text-white flex flex-col justify-between border-r border-white/5 relative overflow-hidden shrink-0">
-            {/* Background Decoration */}
             <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-[#C5A059]/10 rounded-full blur-3xl pointer-events-none"></div>
 
             <div className="relative z-10">
@@ -80,7 +79,7 @@ export default function CFPModal({ isOpen, onClose, onStartSubmission }) {
             </div>
 
             <button
-              onClick={onStartSubmission}
+              onClick={onStartSubmission} // 🚀 Calls the parent logic
               className="w-full bg-[#C5A059] text-[#003366] py-4 rounded-xl font-black uppercase tracking-widest text-[11px] flex items-center justify-center gap-2 hover:bg-white transition-all shadow-xl active:scale-95 relative z-10"
             >
               Start Submission <Send size={16} />
@@ -117,7 +116,7 @@ export default function CFPModal({ isOpen, onClose, onStartSubmission }) {
                 Have your abstract ready?
               </p>
               <button
-                onClick={onStartSubmission}
+                onClick={onStartSubmission} // 🚀 Calls the parent logic
                 className="text-[#003366] font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 mx-auto hover:text-[#C5A059] transition-colors"
               >
                 Open Submission Form →

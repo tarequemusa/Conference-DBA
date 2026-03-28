@@ -9,6 +9,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation"; // 🚀 Added for redirection
 import { useEffect, useState } from "react";
 import AuthModal from "./AuthModal";
 import CFPModal from "./CFPModal";
@@ -16,12 +17,26 @@ import SubmissionModal from "./SubmissionModal";
 
 export default function Hero() {
   const { data: session } = useSession();
+  const router = useRouter(); // 🚀 Initialize router
+
   const [showCFP, setShowCFP] = useState(false);
   const [showSubmission, setShowSubmission] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [authView, setAuthView] = useState("signup"); // 🚀 State to manage Welcome message
 
   const handleRegisterClick = () => {
     session ? setShowSubmission(true) : setIsAuthOpen(true);
+  };
+
+  // 🚀 Logic to bridge CFP Modal and Submission/Auth
+  const handleStartSubmission = () => {
+    setShowCFP(false);
+    if (session) {
+      router.push("/dashboard/submit");
+    } else {
+      setAuthView("submission"); // Trigger "Welcome Researcher"
+      setIsAuthOpen(true);
+    }
   };
 
   return (
@@ -118,15 +133,21 @@ export default function Hero() {
         </div>
       </div>
 
-      <CFPModal isOpen={showCFP} onClose={() => setShowCFP(false)} />
+      <CFPModal
+        isOpen={showCFP}
+        onClose={() => setShowCFP(false)}
+        onStartSubmission={handleStartSubmission} // 🚀 Connected Logic
+      />
+
       <SubmissionModal
         isOpen={showSubmission}
         onClose={() => setShowSubmission(false)}
       />
+
       <AuthModal
         isOpen={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}
-        initialView="signup"
+        initialView={authView} // 🚀 Dynamically set view
       />
 
       <style jsx global>{`

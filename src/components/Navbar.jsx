@@ -52,6 +52,7 @@ export default function Navbar() {
   const navLinks = [
     { name: "About", id: "about" },
     { name: "Guidelines", id: "guidelines" },
+    { name: "Timeline", path: "/schedule" }, // 🚀 INTEGRATED
     { name: "Committee", id: "committee" },
     { name: "Pricing", id: "pricing" },
     { name: "Partners", id: "partners" },
@@ -91,16 +92,27 @@ export default function Navbar() {
 
           {/* Desktop Menu */}
           <div className="hidden lg:flex items-center space-x-6 xl:space-x-8 text-[13px] font-medium text-white/90">
-            {navLinks.map((link) => (
-              <button
-                key={link.id}
-                onClick={() => scrollToSection(link.id)}
-                className="hover:text-[#C5A059] transition-colors relative group/link"
-              >
-                {link.name}
-                <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-[#C5A059] transition-all duration-300 group-hover/link:w-full"></span>
-              </button>
-            ))}
+            {navLinks.map((link) =>
+              link.path ? (
+                <Link
+                  key={link.name}
+                  href={link.path}
+                  className="hover:text-[#C5A059] transition-colors relative group/link"
+                >
+                  {link.name}
+                  <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-[#C5A059] transition-all duration-300 group-hover/link:w-full"></span>
+                </Link>
+              ) : (
+                <button
+                  key={link.id}
+                  onClick={() => scrollToSection(link.id)}
+                  className="hover:text-[#C5A059] transition-colors relative group/link"
+                >
+                  {link.name}
+                  <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-[#C5A059] transition-all duration-300 group-hover/link:w-full"></span>
+                </button>
+              ),
+            )}
 
             <div className="h-4 w-[1px] mx-2 bg-white/10"></div>
 
@@ -152,7 +164,7 @@ export default function Navbar() {
         </div>
       </nav>
 
-      {/* --- MOBILE DRAWER (Scrollable + Branded Header Fix) --- */}
+      {/* --- MOBILE DRAWER --- */}
       <div
         className={`fixed inset-0 w-full h-screen z-[150] lg:hidden transition-all duration-500 ${
           isMobileMenuOpen ? "visible" : "invisible"
@@ -170,7 +182,7 @@ export default function Navbar() {
             isMobileMenuOpen ? "translate-x-0" : "translate-x-full"
           }`}
         >
-          {/* BRANDED HEADER (As per attached image) */}
+          {/* BRANDED HEADER */}
           <div className="flex flex-col p-6 shrink-0 border-b border-white/5">
             <div className="flex justify-between items-start mb-6">
               <div className="flex items-center gap-3">
@@ -206,16 +218,27 @@ export default function Navbar() {
           {/* Scrollable Container */}
           <div className="flex-grow overflow-y-auto custom-scrollbar px-6 pb-10">
             <div className="space-y-3 mt-6 mb-10">
-              {navLinks.map((link) => (
-                <button
-                  key={link.id}
-                  onClick={() => scrollToSection(link.id)}
-                  className="w-full flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/5 text-white text-base font-bold hover:bg-[#C5A059] hover:text-[#003366] transition-all group"
-                >
-                  {link.name}
-                  <div className="w-1.5 h-1.5 rounded-full bg-[#C5A059] shadow-[0_0_8px_#C5A059]" />
-                </button>
-              ))}
+              {navLinks.map((link) =>
+                link.path ? (
+                  <Link
+                    key={link.name}
+                    href={link.path}
+                    className="w-full flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/5 text-white text-base font-bold hover:bg-[#C5A059] hover:text-[#003366] transition-all group"
+                  >
+                    {link.name}
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#C5A059] shadow-[0_0_8px_#C5A059]" />
+                  </Link>
+                ) : (
+                  <button
+                    key={link.id}
+                    onClick={() => scrollToSection(link.id)}
+                    className="w-full flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/5 text-white text-base font-bold hover:bg-[#C5A059] hover:text-[#003366] transition-all group"
+                  >
+                    {link.name}
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#C5A059] shadow-[0_0_8px_#C5A059]" />
+                  </button>
+                ),
+              )}
             </div>
 
             {/* Action Buttons */}
