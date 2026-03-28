@@ -71,12 +71,12 @@ export default function About() {
               <h2 className="text-[#C5A059] text-[10px] md:text-xs font-black uppercase tracking-[0.4em] mb-2">
                 Welcome to Conference DBA 2026
               </h2>
-              <h3 className="text-3xl md:text-5xl font-black text-[#003366] leading-[1.1] uppercase tracking-tighter">
-                Bridging Knowledge <br />
+              <h4 className="text-2xl md:text-4xl font-black text-[#003366] leading-[1.1] uppercase tracking-tighter">
+                Sustainability Focused Industry Trends <br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#C5A059] to-[#b38b4d]">
-                  Across Borders
+                  in Global Research
                 </span>
-              </h3>
+              </h4>
               <p className="text-slate-500 text-sm md:text-base font-medium leading-relaxed max-w-xl">
                 The ICEBTM is a premier platform for presenting new advances and
                 research results in management and social sciences. Hosted by

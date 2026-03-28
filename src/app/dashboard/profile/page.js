@@ -2,14 +2,15 @@
 import Sidebar from "@/components/dashboard/Sidebar";
 import {
   Camera,
+  CheckCircle2,
   Eye,
   EyeOff,
   Image as ImageIcon,
   Loader2,
   Lock,
   Mail,
+  PenTool,
   Save,
-  Shield,
   User,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -26,6 +27,7 @@ export default function ProfilePage() {
   const [formData, setFormData] = useState({
     name: "",
     image: "",
+    signature: "",
     currentPassword: "",
     newPassword: "",
   });
@@ -36,6 +38,7 @@ export default function ProfilePage() {
         ...prev,
         name: session.user.name || "",
         image: session.user.image || "",
+        signature: session.user.signature || "",
       }));
     }
   }, [session]);
@@ -44,10 +47,10 @@ export default function ProfilePage() {
     e.preventDefault();
     setLoading(true);
 
-    // Filter payload so we don't send empty strings for passwords
     const payload = {
       name: formData.name,
       image: formData.image,
+      signature: formData.signature,
     };
 
     if (formData.newPassword.trim() !== "") {
@@ -71,10 +74,11 @@ export default function ProfilePage() {
             ...session?.user,
             name: formData.name,
             image: formData.image,
+            signature: formData.signature,
           },
         });
 
-        toast.success("Profile updated successfully!");
+        toast.success("Identity records updated!");
         setFormData((prev) => ({
           ...prev,
           currentPassword: "",
@@ -93,89 +97,148 @@ export default function ProfilePage() {
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-[#F8FAFC]">
       <Sidebar />
-      <main className="flex-1 p-4 md:p-12 pt-20 md:pt-12">
-        <div className="max-w-3xl mx-auto">
-          <header className="mb-10 text-center md:text-left">
-            <h1 className="text-3xl font-extrabold text-[#003366]">
-              Account Settings
-            </h1>
-            <p className="text-slate-500 mt-2 font-medium">
-              Manage your identity and security.
-            </p>
-          </header>
+      <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        {/* --- COMMAND CENTER HEADER --- */}
+        <header className="h-32 bg-[#001A41] flex items-center justify-between px-12 shadow-2xl shrink-0 z-20">
+          <div className="flex items-center gap-6">
+            <div className="p-3 bg-white/5 border border-white/10 rounded-2xl text-[#C5A059] shadow-inner">
+              <User size={28} strokeWidth={2.5} />
+            </div>
+            <div>
+              <h1 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tighter leading-none">
+                Account Settings
+              </h1>
+              <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.25em] mt-2 opacity-80">
+                Identity & Digital Credentials
+              </p>
+            </div>
+          </div>
+          <div className="hidden md:flex items-center gap-2 px-5 py-2 bg-white/5 border border-white/10 rounded-xl text-emerald-500 text-[10px] font-black uppercase tracking-widest">
+            <CheckCircle2 size={14} /> Encrypted Session
+          </div>
+        </header>
 
+        <div className="p-6 md:p-12 overflow-y-auto custom-scrollbar">
           <form
             onSubmit={handleUpdate}
-            className="bg-white rounded-[2.5rem] p-6 md:p-10 shadow-xl border border-slate-100 space-y-8"
+            className="max-w-4xl mx-auto bg-white rounded-[3rem] p-8 md:p-12 shadow-2xl border border-slate-100 space-y-12 relative overflow-hidden"
           >
-            {/* --- Photo Section --- */}
-            <div className="flex flex-col items-center md:flex-row gap-8 pb-8 border-b border-slate-50">
-              <div className="relative">
-                <div className="w-28 h-28 rounded-[2rem] bg-slate-100 flex items-center justify-center overflow-hidden border-4 border-white shadow-xl">
-                  {formData.image ? (
-                    <img
-                      src={formData.image}
-                      alt="Preview"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <User size={48} className="text-slate-300" />
-                  )}
-                </div>
-                <div className="absolute -bottom-2 -right-2 p-2.5 bg-[#C5A059] text-white rounded-xl shadow-lg border-4 border-white">
-                  <Camera size={18} />
+            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-[#003366] via-[#C5A059] to-[#003366]" />
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+              {/* --- Profile Photo Section --- */}
+              <div className="space-y-6">
+                <h3 className="text-xs font-black text-[#003366] uppercase tracking-[0.2em] flex items-center gap-2">
+                  <Camera size={16} className="text-[#C5A059]" /> Avatar
+                  Identity
+                </h3>
+                <div className="flex items-center gap-6 p-6 bg-slate-50 rounded-[2rem] border border-slate-100">
+                  <div className="relative shrink-0">
+                    <div className="w-24 h-24 rounded-3xl bg-white flex items-center justify-center overflow-hidden border-4 border-white shadow-xl">
+                      {formData.image ? (
+                        <img
+                          src={formData.image}
+                          alt="Preview"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <User size={40} className="text-slate-200" />
+                      )}
+                    </div>
+                  </div>
+                  <CldUploadWidget
+                    uploadPreset="conference_dba_uploads"
+                    onSuccess={(result) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        image: result.info.secure_url,
+                      }))
+                    }
+                  >
+                    {({ open }) => (
+                      <button
+                        type="button"
+                        onClick={() => open()}
+                        className="text-[10px] font-black uppercase tracking-widest px-6 py-3 bg-[#003366] text-white rounded-xl hover:bg-[#C5A059] transition-all shadow-lg"
+                      >
+                        Upload Photo
+                      </button>
+                    )}
+                  </CldUploadWidget>
                 </div>
               </div>
 
-              <div className="flex-1 w-full space-y-4">
-                <h3 className="text-sm font-bold text-[#003366] uppercase tracking-wider">
-                  Profile Picture
+              {/* --- NEW: Signature Section --- */}
+              <div className="space-y-6">
+                <h3 className="text-xs font-black text-[#003366] uppercase tracking-[0.2em] flex items-center gap-2">
+                  <PenTool size={16} className="text-[#C5A059]" /> Official
+                  Signature
                 </h3>
-                <CldUploadWidget
-                  uploadPreset="conference_dba_uploads"
-                  onSuccess={(result) =>
-                    setFormData({ ...formData, image: result.info.secure_url })
-                  }
-                >
-                  {({ open }) => (
-                    <button
-                      type="button"
-                      onClick={() => open()}
-                      className="flex items-center gap-2 px-6 py-3 bg-slate-50 hover:bg-slate-100 text-[#003366] font-bold rounded-2xl transition-all border-2 border-dashed border-slate-200"
-                    >
-                      <ImageIcon size={18} className="text-[#C5A059]" /> Select
-                      New Image
-                    </button>
-                  )}
-                </CldUploadWidget>
+                <div className="flex items-center gap-6 p-6 bg-slate-50 rounded-[2rem] border border-slate-100">
+                  <div className="relative shrink-0">
+                    <div className="w-24 h-24 rounded-3xl bg-white flex items-center justify-center overflow-hidden border-4 border-white shadow-xl bg-[url('https://www.transparenttextures.com/patterns/white-diamond.png')]">
+                      {formData.signature ? (
+                        <img
+                          src={formData.signature}
+                          alt="Signature"
+                          className="w-full h-full object-contain p-2 mix-blend-multiply contrast-125"
+                        />
+                      ) : (
+                        <ImageIcon
+                          size={32}
+                          className="text-slate-200 opacity-50"
+                        />
+                      )}
+                    </div>
+                  </div>
+                  <CldUploadWidget
+                    uploadPreset="conference_dba_uploads"
+                    onSuccess={(result) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        signature: result.info.secure_url,
+                      }))
+                    }
+                  >
+                    {({ open }) => (
+                      <button
+                        type="button"
+                        onClick={() => open()}
+                        className="text-[10px] font-black uppercase tracking-widest px-6 py-3 border-2 border-[#003366] text-[#003366] rounded-xl hover:bg-[#003366] hover:text-white transition-all"
+                      >
+                        Upload Sign
+                      </button>
+                    )}
+                  </CldUploadWidget>
+                </div>
               </div>
             </div>
 
             {/* --- Basic Info --- */}
-            <div className="space-y-6">
-              <h2 className="text-xl font-bold text-[#003366] flex items-center gap-2">
-                <User size={20} className="text-[#C5A059]" /> Basic Information
+            <div className="space-y-8">
+              <h2 className="text-xl font-black text-[#003366] uppercase tracking-tighter flex items-center gap-3">
+                <User size={22} className="text-[#C5A059]" /> Basic Information
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
                     Full Name
                   </label>
                   <input
                     required
                     type="text"
-                    className="w-full px-5 py-4 rounded-2xl border border-slate-200 focus:ring-2 focus:ring-[#C5A059] outline-none transition-all"
+                    className="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:bg-white focus:ring-2 focus:ring-[#C5A059] outline-none transition-all font-bold text-[#003366]"
                     value={formData.name}
                     onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
+                      setFormData((prev) => ({ ...prev, name: e.target.value }))
                     }
                   />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">
-                    Email
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                    Email (Immutable)
                   </label>
-                  <div className="w-full px-5 py-4 rounded-2xl bg-slate-50 border border-slate-100 text-slate-400 flex items-center gap-2 cursor-not-allowed">
+                  <div className="w-full px-6 py-4 rounded-2xl bg-slate-100 border border-slate-200 text-slate-400 flex items-center gap-3 cursor-not-allowed font-bold">
                     <Mail size={16} /> {session?.user?.email}
                   </div>
                 </div>
@@ -183,68 +246,66 @@ export default function ProfilePage() {
             </div>
 
             {/* --- Security --- */}
-            <div className="pt-8 border-t border-slate-50 space-y-6">
-              <h2 className="text-xl font-bold text-[#003366] flex items-center gap-2">
-                <Lock size={20} className="text-[#C5A059]" /> Change Password
+            <div className="space-y-8 pt-4">
+              <h2 className="text-xl font-black text-[#003366] uppercase tracking-tighter flex items-center gap-3">
+                <Lock size={22} className="text-[#C5A059]" /> Security Protocol
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Current Password Field */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="relative">
                   <input
                     type={showCurrentPass ? "text" : "password"}
                     placeholder="Current Password"
-                    className="w-full px-5 py-4 rounded-2xl border border-slate-200 focus:ring-2 focus:ring-[#C5A059] outline-none transition-all pr-12"
+                    className="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:bg-white focus:ring-2 focus:ring-[#C5A059] outline-none transition-all pr-14 font-bold"
                     value={formData.currentPassword}
                     onChange={(e) =>
-                      setFormData({
-                        ...formData,
+                      setFormData((prev) => ({
+                        ...prev,
                         currentPassword: e.target.value,
-                      })
+                      }))
                     }
                   />
                   <button
                     type="button"
                     onClick={() => setShowCurrentPass(!showCurrentPass)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#C5A059] transition-colors"
+                    className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#C5A059] transition-colors"
                   >
                     {showCurrentPass ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
                 </div>
 
-                {/* New Password Field */}
                 <div className="relative">
                   <input
                     type={showNewPass ? "text" : "password"}
-                    placeholder="New Password"
-                    className="w-full px-5 py-4 rounded-2xl border border-slate-200 focus:ring-2 focus:ring-[#C5A059] outline-none transition-all pr-12"
+                    placeholder="New Secure Password"
+                    className="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:bg-white focus:ring-2 focus:ring-[#C5A059] outline-none transition-all pr-14 font-bold"
                     value={formData.newPassword}
                     onChange={(e) =>
-                      setFormData({ ...formData, newPassword: e.target.value })
+                      setFormData((prev) => ({
+                        ...prev,
+                        newPassword: e.target.value,
+                      }))
                     }
                   />
                   <button
                     type="button"
                     onClick={() => setShowNewPass(!showNewPass)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#C5A059] transition-colors"
+                    className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#C5A059] transition-colors"
                   >
                     {showNewPass ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
                 </div>
               </div>
-              <p className="text-[11px] text-slate-400 flex items-center gap-2">
-                <Shield size={14} /> Min. 8 characters with numbers & letters.
-              </p>
             </div>
 
             <button
               disabled={loading}
-              className="w-full py-5 bg-[#003366] text-white font-bold rounded-2xl shadow-lg hover:bg-[#002244] active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+              className="w-full py-5 bg-[#001A41] text-white font-black uppercase tracking-[0.2em] text-xs rounded-2xl shadow-2xl hover:bg-[#C5A059] hover:text-[#001A41] active:scale-[0.98] transition-all flex items-center justify-center gap-4 disabled:opacity-50"
             >
               {loading ? (
                 <Loader2 className="animate-spin" />
               ) : (
                 <>
-                  <Save size={20} /> Update Account
+                  <Save size={20} /> Deploy Profile Changes
                 </>
               )}
             </button>

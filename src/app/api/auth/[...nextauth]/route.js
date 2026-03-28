@@ -27,7 +27,6 @@ export const authOptions = {
           where: { email: credentials.email.toLowerCase() },
         });
 
-        // Ensure user exists and has a password (not a Google-only user)
         if (!user || !user.password) {
           throw new Error("Invalid credentials");
         }
@@ -48,11 +47,12 @@ export const authOptions = {
 
   callbacks: {
     async jwt({ token, user, trigger, session }) {
-      // 1. Initial sign-in: Capture initial user data
+      // 1. Initial sign-in
       if (user) {
         token.id = user.id;
         token.role = user.role;
-        token.email = user.email; // Ensure email is explicitly set
+        token.email = user.email;
+        token.signature = user.signature; // Capture initial signature
       }
 
       // 2. Handle 'update' trigger (Frontend Profile Updates)
@@ -60,9 +60,10 @@ export const authOptions = {
         if (session.name) token.name = session.name;
         if (session.image) token.picture = session.image;
         if (session.role) token.role = session.role;
+        if (session.signature) token.signature = session.signature; // Update signature in token
       }
 
-      // 3. Database Sync: Always fetch the freshest data using email
+      // 3. Database Sync: Always fetch the freshest data
       if (token.email) {
         const dbUser = await prisma.user.findUnique({
           where: { email: token.email },
@@ -71,6 +72,7 @@ export const authOptions = {
             id: true,
             name: true,
             image: true,
+            signature: true, // Fetch signature from DB
           },
         });
 
@@ -79,6 +81,7 @@ export const authOptions = {
           token.id = dbUser.id;
           token.name = dbUser.name;
           token.picture = dbUser.image;
+          token.signature = dbUser.signature; // Sync signature
         }
       }
 
@@ -91,7 +94,8 @@ export const authOptions = {
         session.user.role = token.role;
         session.user.name = token.name;
         session.user.image = token.picture;
-        session.user.email = token.email; // Pass email back to frontend session
+        session.user.email = token.email;
+        session.user.signature = token.signature; // Pass signature to frontend session
       }
       return session;
     },

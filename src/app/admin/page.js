@@ -1,5 +1,5 @@
 "use client";
-
+import ActivityFeed from "@/components/admin/ActivityFeed";
 import SubmissionChart from "@/components/admin/SubmissionChart";
 import Sidebar from "@/components/dashboard/Sidebar";
 import {
@@ -7,12 +7,15 @@ import {
   BarChart3,
   CreditCard,
   FileText,
+  History,
+  Lightbulb,
+  Loader2,
   TrendingUp,
-  UserCheck,
   Users,
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState({
@@ -20,146 +23,226 @@ export default function AdminDashboard() {
     totalAbstracts: 0,
     pendingReviews: 0,
     totalRevenue: 0,
+    forecastRevenue: 0,
+    pipelineValue: 0,
   });
   const [chartData, setChartData] = useState([]);
+  const [recentSubmissions, setRecentSubmissions] = useState([]);
+  const [logs, setLogs] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchStats = async () => {
-      const res = await fetch("/api/admin/stats");
-      const data = await res.json();
-      if (res.ok) setStats(data);
-    };
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        const [statsRes, analyticsRes, recentRes, logsRes] = await Promise.all([
+          fetch("/api/admin/stats"),
+          fetch("/api/admin/analytics"),
+          fetch("/api/admin/abstracts?limit=5"),
+          fetch("/api/admin/logs"),
+        ]);
 
-    const fetchAnalytics = async () => {
-      const res = await fetch("/api/admin/analytics");
-      const data = await res.json();
-      if (res.ok) setChartData(data);
+        if (statsRes.ok) setStats(await statsRes.json());
+        if (analyticsRes.ok) setChartData(await analyticsRes.json());
+        if (recentRes.ok) setRecentSubmissions(await recentRes.json());
+        if (logsRes.ok) setLogs(await logsRes.json());
+      } catch (err) {
+        toast.error("Failed to sync live dashboard data.");
+      } finally {
+        setLoading(false);
+      }
     };
-
-    fetchStats();
-    fetchAnalytics();
+    fetchDashboardData();
   }, []);
+
+  if (loading)
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-[#001A41]">
+        <Loader2 className="animate-spin text-[#C5A059]" size={40} />
+        <p className="mt-4 text-[10px] font-black text-white uppercase tracking-[0.3em]">
+          Initializing Command Center...
+        </p>
+      </div>
+    );
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-[#F8FAFC]">
       <Sidebar />
-
-      <main className="flex-1 w-full pt-20 md:pt-0 p-4 md:p-12 space-y-8 md:space-y-10 overflow-x-hidden">
-        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-extrabold text-[#003366]">
-              Admin Control Center
-            </h1>
-            <p className="text-slate-500 mt-1 font-medium text-xs md:text-sm">
-              Managing ICEBTM 2026 Operations
-            </p>
-          </div>
-          <div className="px-4 py-2 bg-white border border-slate-100 rounded-2xl shadow-sm flex items-center gap-2 w-fit">
-            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-[10px] font-bold text-[#003366] uppercase tracking-wider">
-              System Live
-            </span>
+      <main className="flex-1 w-full overflow-x-hidden">
+        {/* --- THEMATIC HEADER --- */}
+        <header className="h-32 bg-[#001A41] flex items-center justify-between px-12 shadow-2xl relative shrink-0">
+          <div className="flex items-center gap-6">
+            <div className="p-3 bg-white/5 border border-white/10 rounded-2xl text-[#C5A059] shadow-inner">
+              <BarChart3 size={28} strokeWidth={2.5} />
+            </div>
+            <div>
+              <h1 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tighter leading-none">
+                Admin Control Center
+              </h1>
+              <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.25em] mt-2 opacity-80">
+                Conference Operations & System Health
+              </p>
+            </div>
           </div>
         </header>
 
-        {/* --- Stats Grid --- */}
-        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-          <AdminStatCard
-            icon={Users}
-            label="Researchers"
-            value={stats.totalUsers}
-            color="bg-blue-500"
-          />
-          <AdminStatCard
-            icon={FileText}
-            label="Submissions"
-            value={stats.totalAbstracts}
-            color="bg-amber-500"
-          />
-          <AdminStatCard
-            icon={UserCheck}
-            label="Pending"
-            value={stats.pendingReviews}
-            color="bg-emerald-500"
-          />
-          <AdminStatCard
-            icon={CreditCard}
-            label="Revenue"
-            value={`$${stats.totalRevenue}`}
-            color="bg-[#C5A059]"
-          />
-        </section>
+        <div className="p-6 md:p-12 space-y-10">
+          {/* --- ENHANCED STATS GRID --- */}
+          <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <AdminStatCard
+              icon={Users}
+              label="Researchers"
+              value={stats.totalUsers}
+              color="bg-blue-600"
+              sub="Registered"
+            />
+            <AdminStatCard
+              icon={CreditCard}
+              label="Total Revenue"
+              value={`$${stats.totalRevenue.toLocaleString()}`}
+              color="bg-emerald-600"
+              sub="Collected"
+            />
+            <AdminStatCard
+              icon={Lightbulb}
+              label="Revenue Forecast"
+              value={`$${stats.forecastRevenue.toLocaleString()}`}
+              color="bg-[#C5A059]"
+              sub="Projected (Unpaid)"
+            />
+            <AdminStatCard
+              icon={BarChart3}
+              label="Pipeline Value"
+              value={`$${stats.pipelineValue.toLocaleString()}`}
+              color="bg-[#001A41]"
+              sub="Maximum Potential"
+            />
+          </section>
 
-        {/* --- Trends Chart --- */}
-        <section className="bg-white p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] border border-slate-100 shadow-xl">
-          <h2 className="text-lg md:text-xl font-bold text-[#003366] flex items-center gap-2 mb-4">
-            <TrendingUp size={20} className="text-[#C5A059]" /> Submission
-            Trends
-          </h2>
-          <SubmissionChart data={chartData} />
-        </section>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+            <div className="lg:col-span-2 space-y-10">
+              <section className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-xl relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-2 h-full bg-[#C5A059]" />
+                <h2 className="text-xl font-black text-[#003366] uppercase tracking-tighter flex items-center gap-3 mb-10">
+                  <TrendingUp size={22} className="text-[#C5A059]" /> Submission
+                  Trends
+                </h2>
+                <div className="h-[320px]">
+                  <SubmissionChart data={chartData} />
+                </div>
+              </section>
 
-        {/* --- Recent Table --- */}
-        <section className="bg-white rounded-[2rem] border border-slate-100 shadow-xl overflow-hidden">
-          <div className="p-6 md:p-8 border-b border-slate-50 flex justify-between items-center">
-            <h2 className="text-lg md:text-xl font-bold text-[#003366] flex items-center gap-2">
-              <BarChart3 size={20} className="text-[#C5A059]" /> Recent Activity
-            </h2>
-            <Link
-              href="/admin/abstracts"
-              className="text-xs font-bold text-[#C5A059] flex items-center gap-1"
-            >
-              All <ArrowRight size={14} />
-            </Link>
+              <section className="bg-white rounded-[3rem] border border-slate-100 shadow-xl overflow-hidden">
+                <div className="p-10 border-b border-slate-50 flex justify-between items-center bg-slate-50/30">
+                  <h2 className="text-xl font-black text-[#003366] uppercase tracking-tighter flex items-center gap-3">
+                    <FileText size={22} className="text-[#C5A059]" /> Latest
+                    Submissions
+                  </h2>
+                  <Link
+                    href="/admin/abstracts"
+                    className="p-3 bg-white border border-slate-200 rounded-xl text-[#C5A059] hover:bg-[#C5A059] hover:text-white transition-all"
+                  >
+                    <ArrowRight size={18} />
+                  </Link>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left">
+                    <thead className="bg-slate-50/50 text-slate-400 text-[10px] font-black uppercase tracking-widest border-b border-slate-100">
+                      <tr>
+                        <th className="px-10 py-6">Research Title</th>
+                        <th className="px-10 py-6">Status</th>
+                        <th className="px-10 py-6 text-right">Review</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50 text-xs font-bold">
+                      {recentSubmissions.map((abs) => (
+                        <tr
+                          key={abs.id}
+                          className="hover:bg-slate-50/50 transition-colors"
+                        >
+                          <td className="px-10 py-6 font-black text-[#003366] truncate max-w-[300px] uppercase tracking-tight">
+                            {abs.title}
+                          </td>
+                          <td className="px-10 py-6">
+                            <span
+                              className={`px-4 py-1.5 rounded-full text-[8px] font-black uppercase tracking-[0.15em] border ${getStatusStyle(abs.status)}`}
+                            >
+                              {abs.status.replace(/_/g, " ")}
+                            </span>
+                          </td>
+                          <td className="px-10 py-6 text-right">
+                            <Link
+                              href={`/admin/abstracts/${abs.id}`}
+                              className="text-[#C5A059] font-black uppercase text-[10px] tracking-widest hover:underline"
+                            >
+                              Details
+                            </Link>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+
+            <div className="lg:col-span-1">
+              <section className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-2xl h-full relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-2 h-full bg-[#001A41]" />
+                <h2 className="text-xl font-black text-[#003366] uppercase tracking-tighter flex items-center gap-3 mb-12">
+                  <History size={22} className="text-[#C5A059]" /> System Health
+                </h2>
+                <div className="custom-scrollbar overflow-y-auto max-h-[850px] pr-2">
+                  <ActivityFeed logs={logs} />
+                </div>
+              </section>
+            </div>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left min-w-[600px]">
-              <thead className="bg-slate-50 text-slate-400 text-[10px] font-bold uppercase tracking-widest">
-                <tr>
-                  <th className="px-8 py-4">Title</th>
-                  <th className="px-8 py-4">Status</th>
-                  <th className="px-8 py-4">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
-                <tr className="hover:bg-slate-50/50 transition-colors">
-                  <td className="px-8 py-5 font-bold text-[#003366] text-sm truncate max-w-[200px]">
-                    AI in SCM Efficiency
-                  </td>
-                  <td className="px-8 py-5">
-                    <span className="px-2 py-1 bg-amber-50 text-amber-600 text-[10px] font-bold rounded-lg uppercase">
-                      Evaluation
-                    </span>
-                  </td>
-                  <td className="px-8 py-5">
-                    <button className="text-[#C5A059] font-bold text-xs">
-                      Assign
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </section>
+        </div>
       </main>
     </div>
   );
 }
 
-function AdminStatCard({ icon: Icon, label, value, color }) {
+function getStatusStyle(status) {
+  const styles = {
+    INITIAL_EVALUATION: "bg-amber-50 text-amber-600 border-amber-100",
+    PEER_REVIEW: "bg-blue-50 text-blue-600 border-blue-100",
+    CONFIRMED: "bg-emerald-50 text-emerald-600 border-emerald-100",
+    REJECTED: "bg-red-50 text-red-600 border-red-100",
+    ACCEPTANCE_NOTIFICATION: "bg-purple-50 text-purple-600 border-purple-100",
+  };
+  return styles[status] || "bg-slate-50 text-slate-500 border-slate-200";
+}
+
+function AdminStatCard({ icon: Icon, label, value, color, sub }) {
   return (
-    <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4 transition-transform hover:scale-[1.02]">
-      <div
-        className={`p-3 rounded-2xl text-white ${color} shadow-lg shadow-black/5`}
-      >
-        <Icon size={20} />
+    <div className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm flex flex-col justify-between transition-all hover:shadow-2xl hover:-translate-y-2 group relative overflow-hidden">
+      <div className="flex items-center gap-6 relative z-10">
+        <div
+          className={`p-4 bg-slate-50 rounded-2xl ${color} transition-transform group-hover:scale-110 shadow-lg text-white`}
+        >
+          <Icon size={24} />
+        </div>
+        <div>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">
+            {label}
+          </p>
+          <h3 className="text-2xl font-black text-[#003366] tracking-tighter leading-none">
+            {value}
+          </h3>
+          {sub && (
+            <p className="text-[9px] text-slate-400 font-bold uppercase italic opacity-60 mt-2">
+              {sub}
+            </p>
+          )}
+        </div>
       </div>
-      <div>
-        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-          {label}
-        </p>
-        <p className="text-xl font-black text-[#003366]">{value}</p>
-      </div>
+      <Icon
+        size={100}
+        strokeWidth={4}
+        className="absolute -right-4 -bottom-4 text-slate-50 opacity-0 group-hover:opacity-100 transition-opacity"
+      />
     </div>
   );
 }

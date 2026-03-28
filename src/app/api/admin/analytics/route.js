@@ -9,7 +9,6 @@ export async function GET() {
   }
 
   try {
-    // Fetch last 30 days of submissions
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
@@ -18,20 +17,29 @@ export async function GET() {
       select: { createdAt: true },
     });
 
-    // Format data for the chart: { date: 'Mar 01', count: 5 }
-    const chartDataMap = submissions.reduce((acc, curr) => {
-      const date = curr.createdAt.toLocaleDateString("en-US", {
-        month: "short",
-        day: "2-digit",
-      });
-      acc[date] = (acc[date] || 0) + 1;
+    // Group by date string
+    const countsMap = submissions.reduce((acc, curr) => {
+      const dateKey = curr.createdAt.toISOString().split("T")[0];
+      acc[dateKey] = (acc[dateKey] || 0) + 1;
       return acc;
     }, {});
 
-    const formattedData = Object.keys(chartDataMap).map((date) => ({
-      date,
-      count: chartDataMap[date],
-    }));
+    // Fill all 30 days to ensure a smooth chart line
+    const formattedData = [];
+    for (let i = 30; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dateKey = d.toISOString().split("T")[0];
+      const label = d.toLocaleDateString("en-US", {
+        month: "short",
+        day: "2-digit",
+      });
+
+      formattedData.push({
+        date: label,
+        count: countsMap[dateKey] || 0,
+      });
+    }
 
     return Response.json(formattedData);
   } catch (error) {

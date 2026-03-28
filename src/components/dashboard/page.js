@@ -69,7 +69,7 @@ export default function Dashboard() {
               Researcher Dashboard
             </h1>
             <p className="text-slate-500 font-medium mt-1">
-              ICEBTM 2025 • International Conference Portal
+              Conference DBA 2026 • International Conference Portal
             </p>
           </div>
 

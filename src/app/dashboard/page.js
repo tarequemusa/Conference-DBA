@@ -1,17 +1,18 @@
 "use client";
-
 import ReviewProcessTracker from "@/components/dashboard/ReviewProcessTracker";
 import Sidebar from "@/components/dashboard/Sidebar";
 import {
+  ArrowRight,
+  Bell,
   CalendarClock,
+  CreditCard,
   FileText,
   Loader2,
   PlusCircle,
-  RefreshCw,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
 export default function Dashboard() {
@@ -19,41 +20,63 @@ export default function Dashboard() {
   const router = useRouter();
   const [abstracts, setAbstracts] = useState([]);
   const [loadingData, setLoadingData] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-
-  // Role check logic
-  const isResearcher = session?.user?.role === "RESEARCHER";
-
-  const loadData = useCallback(async (silent = false) => {
-    if (!silent) setLoadingData(true);
-    else setIsRefreshing(true);
-
-    try {
-      const res = await fetch("/api/user/abstracts");
-      const data = await res.json();
-      if (res.ok) setAbstracts(data);
-    } catch (err) {
-      if (!silent) toast.error("Failed to load research data.");
-    } finally {
-      setLoadingData(false);
-      setIsRefreshing(false);
-    }
-  }, []);
 
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/");
     } else if (status === "authenticated") {
-      loadData();
-      const interval = setInterval(() => loadData(true), 30000);
-      return () => clearInterval(interval);
+      if (session?.user?.role === "ADMIN") return router.push("/admin");
+      if (session?.user?.role === "REVIEWER") return router.push("/reviewer");
+      if (session?.user?.role === "AUTHORITY") return router.push("/authority");
+
+      fetchAbstracts();
     }
-  }, [status, router, loadData]);
+  }, [status, session, router]);
+
+  const fetchAbstracts = async () => {
+    try {
+      const res = await fetch("/api/user/abstracts");
+      const data = await res.json();
+      if (res.ok) setAbstracts(data);
+    } catch (err) {
+      toast.error("Database connection error");
+    } finally {
+      setLoadingData(false);
+    }
+  };
+
+  const handlePaymentInitiation = async (abstractId) => {
+    const loadingToast = toast.loading("PREPARING SECURE GATEWAY...", {
+      style: {
+        background: "#003366",
+        color: "#fff",
+        border: "1px solid #C5A059",
+      },
+    });
+
+    try {
+      const res = await fetch("/api/user/payments/initiate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ abstractId }),
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        toast.dismiss(loadingToast);
+        router.push(data.checkoutUrl);
+      } else {
+        toast.error(data.error || "Payment Failed", { id: loadingToast });
+      }
+    } catch (err) {
+      toast.error("Connection Error", { id: loadingToast });
+    }
+  };
 
   if (status === "loading" || loadingData) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-slate-50">
-        <Loader2 className="animate-spin text-[#003366]" size={40} />
+      <div className="flex flex-col items-center justify-center min-h-screen bg-[#003366]">
+        <Loader2 className="animate-spin text-[#C5A059]" size={40} />
       </div>
     );
   }
@@ -61,110 +84,112 @@ export default function Dashboard() {
   const latestAbstract = abstracts[0];
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex h-screen bg-[#F8FAFC] overflow-hidden">
       <Sidebar />
-
-      <main className="flex-1 p-6 md:p-10 space-y-10">
-        <div className="flex justify-end -mb-8">
-          <div className="flex items-center gap-2 px-3 py-1 bg-white border border-slate-200 rounded-full shadow-sm">
-            <RefreshCw
-              size={12}
-              className={`${isRefreshing ? "animate-spin text-[#C5A059]" : "text-slate-400"}`}
-            />
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tight">
-              {isRefreshing ? "Syncing Live..." : "Live Tracker Active"}
-            </span>
-          </div>
-        </div>
-
-        <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
+      <main className="flex-1 overflow-y-auto p-6 md:p-12 custom-scrollbar">
+        <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
           <div>
-            <h1 className="text-3xl font-bold text-[#003366]">
-              Welcome back, {session?.user?.name?.split(" ")[0]}!
+            <h1 className="text-3xl font-black text-[#003366] uppercase tracking-tighter">
+              Researcher Workspace
             </h1>
-            <p className="mt-1.5 text-slate-500">
-              {session?.user?.role === "ADMIN"
-                ? "Admin Control Center"
-                : session?.user?.role === "REVIEWER"
-                  ? "Reviewer Panel"
-                  : "Conference DBA 2026 Researcher Portal"}
+            <p className="text-slate-500 font-bold text-xs uppercase tracking-widest mt-1 italic">
+              Manage your submissions
             </p>
           </div>
-
-          {/* Action Button: Only visible to Researchers */}
-          {isResearcher && (
-            <button
-              onClick={() => router.push("/dashboard/submit")}
-              className="flex items-center gap-2.5 px-6 py-3.5 bg-[#C5A059] text-[#003366] font-bold rounded-2xl shadow-lg transition-transform hover:scale-105"
-            >
-              <PlusCircle size={22} />
-              Submit New Abstract
-            </button>
-          )}
+          <button
+            onClick={() => router.push("/dashboard/submit")}
+            className="flex items-center gap-2 px-6 py-3 bg-[#C5A059] text-[#003366] font-black uppercase text-[11px] tracking-widest rounded-2xl shadow-lg hover:scale-105 transition-all"
+          >
+            <PlusCircle size={20} /> Submit Abstract
+          </button>
         </header>
 
-        {latestAbstract ? (
-          <section className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
-            <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div>
-                <h2 className="text-2xl font-semibold text-[#003366]">
-                  My Paper Status
-                </h2>
-                <p className="text-sm font-medium text-slate-500 mt-1 truncate max-w-md">
-                  {latestAbstract.title}
-                </p>
+        {/* PAYMENT CARD (Conditional) */}
+        {latestAbstract?.status === "ACCEPTANCE_NOTIFICATION" && (
+          <div className="mb-8 bg-[#003366] rounded-[2.5rem] p-8 md:p-10 text-white shadow-2xl relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-[#C5A059]/10 rounded-full -mr-20 -mt-20 blur-3xl group-hover:bg-[#C5A059]/20 transition-all duration-700"></div>
+            <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+              <div className="flex items-center gap-6">
+                <div className="p-5 bg-[#C5A059] text-[#003366] rounded-[2rem] shadow-xl">
+                  <CreditCard size={32} />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-black uppercase tracking-tighter leading-none mb-2">
+                    Registration Open
+                  </h2>
+                  <p className="text-[#C5A059] text-[10px] font-black uppercase tracking-[0.2em]">
+                    Final step to confirm your slot
+                  </p>
+                </div>
               </div>
-              <div className="flex items-center gap-3 bg-[#fdfaf3] text-[#a8823f] px-4 py-2 rounded-xl text-sm font-semibold border border-[#f0e6ce]">
-                <CalendarClock size={16} />
-                Current Phase: {latestAbstract.status.replace(/_/g, " ")}
-              </div>
+              <button
+                onClick={() => handlePaymentInitiation(latestAbstract.id)}
+                className="w-full md:w-auto px-10 py-5 bg-white text-[#003366] font-black uppercase text-xs tracking-widest rounded-2xl hover:bg-[#C5A059] transition-all flex items-center justify-center gap-3 shadow-lg group"
+              >
+                Pay Registration Fee{" "}
+                <ArrowRight
+                  size={18}
+                  className="group-hover:translate-x-2 transition-transform"
+                />
+              </button>
             </div>
-
-            <ReviewProcessTracker
-              currentStatus={latestAbstract.status}
-              abstractId={latestAbstract.id}
-            />
-          </section>
-        ) : (
-          <div className="bg-white p-12 rounded-3xl border border-dashed border-slate-300 text-center">
-            <FileText className="mx-auto text-slate-300 mb-4" size={48} />
-            <h3 className="text-[#003366] font-bold text-lg">
-              No active submissions
-            </h3>
-            <p className="text-slate-500">
-              Submit your abstract to begin the peer review process.
-            </p>
           </div>
         )}
 
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <StatCard
-            icon={FileText}
-            label="Total Submissions"
-            value={abstracts.length}
-          />
-          <StatCard
-            icon={FileText}
-            label="Paid Registrations"
-            value={abstracts.filter((a) => a.isPaid).length}
-          />
-          <StatCard icon={FileText} label="Notifications" value="2" />
+        {/* TRACKER SECTION */}
+        <section className="bg-white rounded-[2.5rem] border border-slate-100 shadow-xl p-8 md:p-10 mb-8 relative overflow-hidden">
+          {latestAbstract ? (
+            <>
+              <div className="flex justify-between items-center mb-8">
+                <h2 className="text-xl font-black text-[#003366] uppercase tracking-tighter">
+                  Live Status
+                </h2>
+                <span
+                  className={`px-4 py-1.5 text-[10px] font-black rounded-full border uppercase tracking-widest ${latestAbstract.status === "CONFIRMED" ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-blue-50 text-blue-600 border-blue-100"}`}
+                >
+                  {latestAbstract.status.replace(/_/g, " ")}
+                </span>
+              </div>
+              <ReviewProcessTracker
+                currentStatus={latestAbstract.status}
+                abstractId={latestAbstract.id}
+              />
+            </>
+          ) : (
+            <div className="py-12 text-center opacity-40 italic">
+              No abstracts submitted.
+            </div>
+          )}
         </section>
-      </main>
-    </div>
-  );
-}
 
-function StatCard({ icon: Icon, label, value }) {
-  return (
-    <div className="flex items-center gap-5 p-6 bg-white rounded-2xl border border-slate-100 shadow-sm">
-      <div className="p-3 bg-[#e8f0f8] text-[#003366] rounded-xl">
-        <Icon size={24} />
-      </div>
-      <div>
-        <p className="text-sm text-slate-500 font-medium">{label}</p>
-        <p className="text-3xl font-extrabold text-[#003366]">{value}</p>
-      </div>
+        {/* STATS GRID */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[
+            { label: "Submissions", val: abstracts.length, icon: FileText },
+            { label: "Deadlines", val: "May 20", icon: CalendarClock },
+            {
+              label: "Alerts",
+              val: latestAbstract?.status === "CONFIRMED" ? "00" : "01",
+              icon: Bell,
+            },
+          ].map((stat, i) => (
+            <div
+              key={i}
+              className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-5"
+            >
+              <div className="p-4 bg-slate-50 text-[#003366] rounded-2xl">
+                <stat.icon size={24} />
+              </div>
+              <div>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                  {stat.label}
+                </p>
+                <p className="text-2xl font-black text-[#003366]">{stat.val}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </main>
     </div>
   );
 }

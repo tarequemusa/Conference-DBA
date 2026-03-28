@@ -4,7 +4,10 @@ import {
   BarChart3,
   CheckCircle,
   ClipboardCheck,
+  CreditCard,
   FileText,
+  History,
+  Landmark,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -26,7 +29,6 @@ export default function Sidebar() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
 
-  // Close sidebar when route changes (mobile)
   useEffect(() => {
     setIsOpen(false);
   }, [pathname]);
@@ -34,16 +36,15 @@ export default function Sidebar() {
   const userRole = session?.user?.role;
   const isAdmin = userRole === "ADMIN";
   const isReviewer = userRole === "REVIEWER";
+  const isAuthority = userRole === "AUTHORITY";
 
-  // 1. Researcher Menu Items (Updated Path)
   const researcherItems = [
     { name: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
-    { name: "Submit Abstract", icon: PlusCircle, path: "/dashboard/submit" }, // Path updated to fix 404
+    { name: "Submit Abstract", icon: PlusCircle, path: "/dashboard/submit" },
     { name: "My Abstracts", icon: FileText, path: "/dashboard/abstracts" },
     { name: "Certificates", icon: Award, path: "/dashboard/certificates" },
   ];
 
-  // 2. Reviewer Menu Items
   const reviewerItems = [
     { name: "Review Overview", icon: LayoutDashboard, path: "/reviewer" },
     {
@@ -58,39 +59,58 @@ export default function Sidebar() {
     },
   ];
 
-  // 3. Admin Menu Items
   const adminItems = [
     { name: "Admin Console", icon: ShieldCheck, path: "/admin" },
     { name: "Manage Abstracts", icon: BarChart3, path: "/admin/abstracts" },
+    { name: "Finance & Revenue", icon: CreditCard, path: "/admin/finance" },
     { name: "User Management", icon: Users, path: "/admin/users" },
+    { name: "Activity Logs", icon: History, path: "/admin/logs" },
   ];
 
-  // 4. Common Items
-  const commonItems = [
-    { name: "Profile", icon: UserCircle, path: "/dashboard/profile" },
-    { name: "Settings", icon: Settings, path: "/dashboard/settings" },
+  const authorityItems = [
+    { name: "Authority Desk", icon: Landmark, path: "/authority" },
+    { name: "Event Stats", icon: BarChart3, path: "/authority/stats" },
   ];
 
   const getMenuItems = () => {
-    if (isAdmin) return [...adminItems, ...commonItems];
-    if (isReviewer) return [...reviewerItems, ...commonItems];
-    return [...researcherItems, ...commonItems];
+    if (isAdmin) {
+      return [
+        ...adminItems,
+        { name: "Profile", icon: UserCircle, path: "/dashboard/profile" },
+        { name: "Settings", icon: Settings, path: "/admin/settings" },
+      ];
+    }
+    const commonForOthers = [
+      { name: "Profile", icon: UserCircle, path: "/dashboard/profile" },
+    ];
+    if (isReviewer) return [...reviewerItems, ...commonForOthers];
+    if (isAuthority) return [...authorityItems, ...commonForOthers];
+    return [...researcherItems, ...commonForOthers];
   };
 
   const menuItems = getMenuItems();
 
   return (
     <>
-      {/* Mobile Trigger */}
-      <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-[#003366] flex items-center justify-between px-6 z-[60] shadow-md">
-        <h2 className="text-xl font-bold text-[#C5A059]">
-          Conference DBA 2026
-        </h2>
+      {/* Mobile Trigger Header */}
+      <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-[#003366] flex items-center justify-between px-6 z-[60] shadow-md border-b border-white/5">
+        <div className="flex items-center gap-3">
+          <Image
+            src="/images/logo.png"
+            alt="Logo"
+            width={30}
+            height={30}
+            className="object-contain"
+          />
+          <h2 className="text-sm font-black text-white uppercase tracking-tighter">
+            Conference <span className="text-[#C5A059]">DBA</span>
+          </h2>
+        </div>
         <button
           onClick={() => setIsOpen(!isOpen)}
           className="p-2 text-white hover:bg-white/10 rounded-lg transition-colors"
         >
-          {isOpen ? <X size={28} /> : <Menu size={28} />}
+          {isOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
 
@@ -104,26 +124,43 @@ export default function Sidebar() {
 
       {/* Sidebar Container */}
       <aside
-        className={`
-        fixed md:sticky top-0 left-0 z-[80]
-        flex flex-col w-72 bg-[#003366] text-white h-screen p-6 shadow-2xl
-        transition-transform duration-300 ease-in-out
-        ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
-      `}
+        className={`fixed md:sticky top-0 left-0 z-[80] flex flex-col w-72 bg-[#003366] text-white h-screen p-6 shadow-2xl transition-transform duration-300 ease-in-out ${
+          isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+        }`}
       >
-        <div className="mb-10 px-2 hidden md:block text-center">
-          <h2 className="text-2xl font-bold tracking-tight text-[#C5A059]">
-            Conference DBA 2026
+        {/* BRANDED HEADER */}
+        <div className="mb-10 flex flex-col items-center text-center animate-in fade-in duration-500">
+          <div className="relative w-16 h-16 mb-4 p-2 bg-white/10 rounded-2xl border border-white/10 shadow-xl">
+            <Image
+              src="/images/logo.png"
+              alt="Logo"
+              fill
+              sizes="64px"
+              className="object-contain p-2"
+              priority
+            />
+          </div>
+          <h2 className="text-xl font-black uppercase tracking-tighter leading-none text-white">
+            CONFERENCE <span className="text-[#C5A059]">DBA</span>
           </h2>
-          <p className="text-[10px] text-slate-400 uppercase tracking-widest font-semibold mt-1">
-            {isAdmin
-              ? "Administrator"
-              : isReviewer
-                ? "Reviewer Panel"
-                : "Researcher Portal"}
+          <p className="text-[10px] text-white/40 font-bold uppercase tracking-[0.2em] mt-2">
+            INTERNATIONAL 2026
           </p>
+          <div className="mt-4 px-4 py-1 bg-[#C5A059]/10 border border-[#C5A059]/20 rounded-full">
+            <span className="text-[9px] text-[#C5A059] font-black uppercase tracking-widest">
+              {isAdmin
+                ? "Admin"
+                : isReviewer
+                  ? "Reviewer"
+                  : isAuthority
+                    ? "Authority"
+                    : "Researcher"}{" "}
+              Portal
+            </span>
+          </div>
         </div>
 
+        {/* Navigation Items */}
         <nav className="flex-1 space-y-2 overflow-y-auto custom-scrollbar">
           {menuItems.map((item) => {
             const isActive = pathname === item.path;
@@ -131,18 +168,18 @@ export default function Sidebar() {
               <Link
                 key={item.name}
                 href={item.path}
-                className={`flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all font-medium group ${
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold text-xs uppercase tracking-wider group ${
                   isActive
                     ? "bg-[#C5A059] text-[#003366] shadow-lg"
-                    : "text-slate-300 hover:bg-white/10 hover:text-white"
+                    : "text-slate-300 hover:bg-white/5 hover:text-white"
                 }`}
               >
                 <item.icon
-                  size={20}
+                  size={18}
                   className={
                     isActive
                       ? "text-[#003366]"
-                      : "text-slate-400 group-hover:text-white"
+                      : "text-slate-400 group-hover:text-[#C5A059]"
                   }
                 />
                 {item.name}
@@ -151,39 +188,44 @@ export default function Sidebar() {
           })}
         </nav>
 
+        {/* User Profile & Logout Section */}
         <div className="pt-6 border-t border-white/10 mt-auto">
-          <div className="flex items-center gap-3 px-2 mb-6">
+          <div className="flex items-center gap-3 px-2 mb-6 text-left">
+            {/* --- PROFILE IMAGE LOGIC --- */}
             {session?.user?.image ? (
               <div className="relative w-10 h-10 shrink-0">
                 <Image
                   src={session.user.image}
                   alt="Profile"
                   fill
-                  className="rounded-full border-2 border-[#C5A059] object-cover"
+                  sizes="40px"
+                  className="rounded-full border-2 border-[#C5A059] object-cover shadow-lg"
+                  priority
                 />
               </div>
             ) : (
-              <div className="w-10 h-10 shrink-0 rounded-full bg-[#C5A059] flex items-center justify-center text-[#003366] font-bold">
+              <div className="w-10 h-10 shrink-0 rounded-full bg-[#C5A059] flex items-center justify-center text-[#003366] font-black uppercase border border-white/10 shadow-inner">
                 {session?.user?.name?.charAt(0) || "U"}
               </div>
             )}
+
             <div className="overflow-hidden">
-              <p className="text-sm font-bold truncate">
+              <p className="text-sm font-bold truncate text-white leading-tight">
                 {session?.user?.name}
               </p>
-              <p className="text-[10px] text-slate-400 truncate uppercase tracking-tighter">
-                {userRole} • {session?.user?.email?.split("@")[0]}
+              <p className="text-[9px] text-slate-400 truncate uppercase tracking-tighter font-black mt-0.5 opacity-60">
+                {session?.user?.email}
               </p>
             </div>
           </div>
 
           <button
             onClick={() => signOut({ callbackUrl: "/" })}
-            className="flex items-center gap-3 w-full px-4 py-3 text-red-400 hover:bg-red-500/10 rounded-xl transition-colors font-semibold group"
+            className="flex items-center gap-3 w-full px-4 py-3 text-red-400 hover:bg-red-500/10 rounded-xl transition-all font-bold uppercase text-[10px] tracking-widest group"
           >
             <LogOut
-              size={20}
-              className="group-hover:translate-x-1 transition-transform"
+              size={18}
+              className="group-hover:-translate-x-1 transition-transform"
             />
             Logout
           </button>

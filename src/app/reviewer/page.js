@@ -1,187 +1,326 @@
 "use client";
-
 import Sidebar from "@/components/dashboard/Sidebar";
+import { jsPDF } from "jspdf";
+import "jspdf-autotable";
 import {
-  ArrowRight,
+  Activity,
   CheckCircle,
   ClipboardCheck,
   Clock,
+  Download,
+  ExternalLink,
   FileText,
   Loader2,
+  Search,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
-export default function ReviewerDashboard() {
-  const { data: session } = useSession();
-  const [tasks, setTasks] = useState([]);
+export default function ReviewerAbstracts() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const [abstracts, setAbstracts] = useState([]);
+  const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
-    const fetchTasks = async () => {
-      try {
-        const res = await fetch("/api/reviewer/tasks");
-        const data = await res.json();
-        if (res.ok) {
-          setTasks(data);
-        } else {
-          toast.error("Failed to load assignments");
-        }
-      } catch (err) {
-        console.error("Fetch Error:", err);
-      } finally {
-        setLoading(false);
+    if (status === "authenticated" && session?.user?.role !== "REVIEWER") {
+      toast.error("Access Restricted to Reviewers");
+      router.push("/dashboard");
+    } else if (status === "authenticated") {
+      fetchAllData();
+    }
+  }, [status, session, router]);
+
+  const fetchAllData = async () => {
+    setLoading(true);
+    try {
+      const [absRes, statsRes] = await Promise.all([
+        fetch("/api/reviewer/abstracts"),
+        fetch("/api/reviewer/stats"),
+      ]);
+
+      // Check if responses are OK before parsing JSON
+      if (!absRes.ok || !statsRes.ok) {
+        throw new Error("Server responded with an error");
       }
-    };
 
-    if (session) fetchTasks();
-  }, [session]);
+      const absData = await absRes.json();
+      const statsData = await statsRes.json();
 
-  const pendingCount = tasks.filter((t) => !t.isFinal).length;
-  const completedCount = tasks.filter((t) => t.isFinal).length;
-  const totalCount = tasks.length;
+      setAbstracts(absData);
+      setChartData(statsData);
+    } catch (err) {
+      console.error(err);
+      toast.error("Dashboard Sync Failed. Please refresh.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const generateSummaryPDF = () => {
+    const doc = new jsPDF({ orientation: "landscape" });
+    const completed = abstracts.filter((a) => a.status !== "PEER_REVIEW");
+
+    if (completed.length === 0) {
+      return toast.error("No completed evaluations found to export.");
+    }
+
+    doc.setFillColor(0, 26, 65);
+    doc.rect(0, 0, 297, 45, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(24);
+    doc.setFont("helvetica", "bold");
+    doc.text("PEER REVIEWER ACTIVITY REPORT", 15, 22);
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(197, 160, 89);
+    doc.text(`CONFERENCE DBA INTERNATIONAL 2026`, 15, 30);
+    doc.setTextColor(255, 255, 255);
+    doc.text(`Reviewer: ${session?.user?.name.toUpperCase()}`, 15, 38);
+    doc.text(`Export Date: ${new Date().toLocaleDateString()}`, 245, 38);
+
+    const tableData = completed.map((abs, index) => [
+      index + 1,
+      abs.id.slice(-8).toUpperCase(),
+      abs.title.toUpperCase(),
+      abs.user?.name || "ANONYMOUS",
+      abs.status.replace(/_/g, " "),
+      new Date(abs.updatedAt).toLocaleDateString(),
+    ]);
+
+    doc.autoTable({
+      startY: 55,
+      head: [
+        [
+          "#",
+          "PAPER ID",
+          "RESEARCH TITLE",
+          "SUBMITTED BY",
+          "FINAL STATUS",
+          "COMPLETION DATE",
+        ],
+      ],
+      body: tableData,
+      headStyles: {
+        fillColor: [197, 160, 89],
+        textColor: [0, 26, 65],
+        fontStyle: "bold",
+      },
+      alternateRowStyles: { fillColor: [248, 250, 252] },
+      margin: { left: 15, right: 15 },
+      styles: { fontSize: 8, cellPadding: 5 },
+    });
+
+    doc.save(`Review_Summary_${session?.user?.name.replace(/\s+/g, "_")}.pdf`);
+  };
+
+  const filtered = abstracts.filter(
+    (abs) =>
+      abs.title.toLowerCase().includes(search.toLowerCase()) ||
+      abs.id.toLowerCase().includes(search.toLowerCase()),
+  );
+
+  if (status === "loading" || loading) {
+    return (
+      <div className="h-screen bg-[#001A41] flex flex-col items-center justify-center">
+        <Loader2 className="animate-spin text-[#C5A059] mb-4" size={40} />
+        <p className="text-[10px] font-black text-white uppercase tracking-[0.3em]">
+          Accessing Reviewer Vault...
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen bg-[#F8FAFC]">
+    <div className="flex h-screen bg-[#F8FAFC] overflow-hidden">
       <Sidebar />
-
-      {/* Main Content: pt-20 removed to start content from the very top */}
-      <main className="flex-1 w-full p-4 md:p-12 space-y-8 overflow-x-hidden">
-        <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-extrabold text-[#003366]">
-              Reviewer Panel
-            </h1>
-            <p className="text-slate-500 mt-1 font-medium text-sm">
-              Evaluating Conference DBA 2026 Academic Submissions
-            </p>
-          </div>
-
-          {/* Replaced Navbar Profile with a sleek Session Badge */}
-          <div className="hidden md:flex items-center gap-3 px-4 py-2 bg-white rounded-2xl border border-slate-100 shadow-sm">
-            <div className="w-8 h-8 rounded-full bg-[#C5A059]/10 flex items-center justify-center text-[#C5A059]">
-              <FileText size={16} />
+      <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <header className="h-32 bg-[#001A41] flex items-center justify-between px-10 shadow-2xl shrink-0 z-20">
+          <div className="flex items-center gap-5">
+            <div className="p-3 bg-white/5 border border-white/10 rounded-2xl text-[#C5A059]">
+              <ClipboardCheck size={26} strokeWidth={2.5} />
             </div>
             <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">
-                Reviewer
-              </p>
-              <p className="text-xs font-bold text-[#003366]">
-                {session?.user?.name || "User Session"}
+              <h1 className="text-xl font-black text-white uppercase tracking-tighter leading-none">
+                Review Desk
+              </h1>
+              <p className="text-[9px] text-slate-400 font-black uppercase tracking-[0.25em] mt-1.5 opacity-80">
+                Evaluation Management & Reports
               </p>
             </div>
+          </div>
+
+          <div className="hidden lg:flex items-center gap-4">
+            <div className="relative">
+              <Search
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"
+                size={16}
+              />
+              <input
+                type="text"
+                placeholder="Search assignments..."
+                className="w-64 pl-11 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-xs font-bold text-white outline-none focus:ring-2 ring-[#C5A059]/30 transition-all"
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <button
+              onClick={generateSummaryPDF}
+              className="flex items-center gap-2 px-6 py-3 bg-[#C5A059] text-[#001A41] rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white transition-all shadow-xl active:scale-95"
+            >
+              <Download size={14} /> Download Report
+            </button>
           </div>
         </header>
 
-        {/* --- Stats Section --- */}
-        <section className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
-          <ReviewStatCard
-            icon={Clock}
-            label="Pending My Review"
-            value={loading ? "..." : pendingCount}
-            color="text-amber-500"
-            bg="bg-amber-50"
-          />
-          <ReviewStatCard
-            icon={CheckCircle}
-            label="Completed"
-            value={loading ? "..." : completedCount}
-            color="text-emerald-500"
-            bg="bg-emerald-50"
-          />
-          <ReviewStatCard
-            icon={ClipboardCheck}
-            label="Total Assigned"
-            value={loading ? "..." : totalCount}
-            color="text-blue-500"
-            bg="bg-blue-50"
-          />
-        </section>
-
-        {/* --- Assignments List --- */}
-        <section className="bg-white rounded-[2rem] border border-slate-100 shadow-xl overflow-hidden">
-          <div className="p-6 md:p-8 flex justify-between items-center bg-white border-b border-slate-50">
-            <h2 className="text-lg font-bold text-[#003366]">
-              Recent Assignments
-            </h2>
-            <Link
-              href="/reviewer/pending"
-              className="text-xs font-bold text-[#C5A059] flex items-center gap-1 hover:underline transition-all"
-            >
-              View All <ArrowRight size={14} />
-            </Link>
+        <div className="flex-1 overflow-y-auto p-6 md:p-10 custom-scrollbar bg-slate-50/30">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-10">
+            <ReviewStatCard
+              label="Total Assigned"
+              val={abstracts.length}
+              icon={FileText}
+              color="text-blue-600"
+              bg="bg-blue-50"
+            />
+            <ReviewStatCard
+              label="Pending Review"
+              val={abstracts.filter((a) => a.status === "PEER_REVIEW").length}
+              icon={Clock}
+              color="text-amber-600"
+              bg="bg-amber-50"
+            />
+            <ReviewStatCard
+              label="Completed"
+              val={abstracts.filter((a) => a.status !== "PEER_REVIEW").length}
+              icon={CheckCircle}
+              color="text-emerald-600"
+              bg="bg-emerald-50"
+            />
           </div>
 
-          <div className="p-6 md:p-8 space-y-4">
-            {loading ? (
-              <div className="py-12 flex flex-col items-center justify-center gap-3 text-slate-300">
-                <Loader2 className="animate-spin" size={32} />
-                <p className="text-xs font-bold uppercase tracking-widest">
-                  Fetching Assignments...
-                </p>
+          {/* VELOCITY CHART SECTION */}
+          <section className="mb-10 bg-white p-8 rounded-[3rem] border border-slate-100 shadow-xl relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-1.5 h-full bg-[#C5A059]" />
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-slate-50 rounded-lg text-[#003366]">
+                  <Activity size={18} />
+                </div>
+                <h3 className="text-xs font-black text-[#003366] uppercase tracking-widest">
+                  Review Velocity Tracking
+                </h3>
               </div>
-            ) : tasks.length > 0 ? (
-              tasks.slice(0, 5).map((task) => (
+            </div>
+            <div className="flex items-end justify-between h-32 gap-2 px-4">
+              {chartData.map((data, i) => (
                 <div
-                  key={task.id}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between p-5 border border-slate-50 rounded-2xl hover:border-[#C5A059]/30 hover:bg-slate-50/50 transition-all gap-4 group"
+                  key={i}
+                  className="flex-1 flex flex-col items-center gap-2 group"
                 >
-                  <div className="space-y-1">
-                    <h3 className="font-bold text-[#003366] group-hover:text-[#C5A059] transition-colors">
-                      {task.abstract?.title || "No Title Provided"}
-                    </h3>
-                    <div className="flex items-center gap-3">
-                      <p className="text-[10px] text-slate-400 font-bold uppercase">
-                        Ref: {task.id.slice(-6).toUpperCase()}
-                      </p>
-                      <span
-                        className={`text-[9px] px-2 py-0.5 rounded-full font-bold ${
-                          task.isFinal
-                            ? "bg-emerald-100 text-emerald-700"
-                            : "bg-amber-100 text-amber-700"
-                        }`}
-                      >
-                        {task.isFinal ? "COMPLETED" : "PENDING"}
-                      </span>
-                    </div>
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-[#001A41] text-[#C5A059] text-[8px] font-black px-2 py-1 rounded mb-1">
+                    {data.count}
                   </div>
-                  <Link
-                    href={`/reviewer/evaluate/${task.id}`}
-                    className="px-6 py-2.5 bg-[#003366] text-white text-xs font-bold rounded-xl hover:bg-[#C5A059] shadow-md transition-all text-center whitespace-nowrap"
-                  >
-                    {task.isFinal ? "View Feedback" : "Review Paper"}
-                  </Link>
+                  <div
+                    className="w-full bg-slate-50 rounded-t-lg transition-all duration-700 group-hover:bg-[#C5A059]"
+                    style={{
+                      height: `${(data.count / (Math.max(...chartData.map((d) => d.count)) || 1)) * 100}%`,
+                      minHeight: "4px",
+                    }}
+                  />
+                  <span className="text-[8px] font-black text-slate-400 uppercase">
+                    {data.month}
+                  </span>
                 </div>
-              ))
-            ) : (
-              <div className="py-16 text-center space-y-3">
-                <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto text-slate-200">
-                  <ClipboardCheck size={32} />
-                </div>
-                <p className="text-slate-400 font-medium italic">
-                  No papers assigned to you yet.
-                </p>
-              </div>
-            )}
-          </div>
-        </section>
+              ))}
+            </div>
+          </section>
+
+          <section className="bg-white rounded-[3rem] border border-slate-100 shadow-2xl overflow-hidden relative">
+            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#003366] via-[#C5A059] to-[#003366]" />
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead className="bg-slate-50/50 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] border-b border-slate-100">
+                  <tr>
+                    <th className="px-8 py-6 text-[#003366]">
+                      Submission Details
+                    </th>
+                    <th className="px-8 py-6">Status</th>
+                    <th className="px-8 py-6 text-right">Action Center</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {filtered.map((abs) => {
+                    const isDone = abs.status !== "PEER_REVIEW";
+                    return (
+                      <tr
+                        key={abs.id}
+                        className="hover:bg-slate-50/50 transition-colors group"
+                      >
+                        <td className="px-8 py-7">
+                          <div className="flex items-center gap-5">
+                            <div
+                              className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-sm shadow-inner ${isDone ? "bg-emerald-50 text-emerald-600" : "bg-slate-100 text-[#003366]"}`}
+                            >
+                              {abs.id.slice(-2).toUpperCase()}
+                            </div>
+                            <div>
+                              <p className="font-bold text-[#003366] text-sm uppercase tracking-tight">
+                                {abs.title}
+                              </p>
+                              <p className="text-[9px] text-slate-400 font-black uppercase tracking-tighter">
+                                Researcher: {abs.user?.name || "N/A"}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-8 py-7">
+                          <span
+                            className={`inline-flex px-3 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg border ${isDone ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-amber-50 text-amber-600 border-amber-100"}`}
+                          >
+                            {isDone ? "Evaluation Complete" : "Pending Grading"}
+                          </span>
+                        </td>
+                        <td className="px-8 py-7 text-right">
+                          <button
+                            onClick={() =>
+                              router.push(`/reviewer/evaluate/${abs.id}`)
+                            }
+                            className="inline-flex items-center gap-2 px-6 py-3 bg-[#001A41] text-white hover:bg-[#C5A059] hover:text-[#001A41] rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg active:scale-95"
+                          >
+                            {isDone ? "View Breakdown" : "Begin Review"}{" "}
+                            <ExternalLink size={14} />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
       </main>
     </div>
   );
 }
 
-function ReviewStatCard({ icon: Icon, label, value, color, bg }) {
+function ReviewStatCard({ label, val, icon: Icon, color, bg }) {
   return (
-    <div
-      className={`p-6 rounded-3xl border border-slate-100 shadow-sm ${bg} flex flex-col gap-2 transition-transform hover:scale-[1.02] active:scale-95 cursor-default`}
-    >
-      <Icon className={color} size={24} />
-      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-        {label}
-      </p>
-      <p className={`text-3xl font-black ${color}`}>{value}</p>
+    <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-xl flex items-center gap-6 transition-all hover:shadow-2xl hover:-translate-y-1">
+      <div className={`p-4 rounded-2xl ${bg} ${color} shadow-inner`}>
+        <Icon size={24} />
+      </div>
+      <div>
+        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">
+          {label}
+        </p>
+        <p className="text-3xl font-black text-[#003366] tracking-tighter">
+          {val}
+        </p>
+      </div>
     </div>
   );
 }

@@ -12,6 +12,7 @@ enum UserRole {
   RESEARCHER
   REVIEWER
   ADMIN
+  AUTHORITY
 }
 
 // Paper progression status
@@ -25,6 +26,7 @@ enum ProcessStatus {
   PEER_REVIEW
   REVISION_REQUIRED
   FINAL_DECISION
+  REJECTED                // Added for Authority Rejection
 }
 
 model User {
@@ -32,11 +34,12 @@ model User {
   name          String?
   email         String?   @unique
   emailVerified DateTime?
-  image         String? // Profile Photo URL
-  password      String? // Hashed password (null for Google users)
+  image         String?   // Profile Photo URL
+  password      String?   // Hashed password (null for Google users)
+  signature     String?   @db.Text // Stores base64 signature image
   role          UserRole  @default(RESEARCHER)
 
-  // Timestamps (Crucial for Admin Management sorting)
+  // Timestamps
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -86,34 +89,49 @@ model Abstract {
   title     String
   coAuthors String?
   abstract  String        @db.Text
-  status    ProcessStatus @default(INITIAL_EVALUATION)
+  status        String    @default("ABSTRACT_SUBMISSION")
 
   // Payment tracking fields
   isPaid          Boolean @default(false)
   paymentAmount   Float?
+  transactionId String?   // For SSL Commerz later
   stripeSessionId String? @unique
+  fullPaperUrl    String?   // URL to the PDF/Doc file
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  userId  String
-  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  reviews Review[]
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reviews    Review[]
+  
+  // Link to the specific reviewer assigned
+  reviewerId String?
 }
 
 model Review {
-  id             String  @id @default(cuid())
-  rating         String? // Flexibile for 1-5 or text-based
+  id              String  @id @default(cuid())
+  
+  // Rubric Scores
+  originality    Int     @default(0)
+  methodology    Int     @default(0)
+  relevance      Int     @default(0)
+  clarity        Int     @default(0)
+  totalScore     Int     @default(0)
+  
   comments       String  @db.Text
-  recommendation String // e.g., "ACCEPT", "REJECT", "PENDING"
+  recommendation String? // e.g., "ACCEPT", "REJECT"
   isFinal        Boolean @default(false)
 
   reviewerId String
   reviewer   User     @relation("ReviewerDocs", fields: [reviewerId], references: [id])
-  abstractId String
+  abstractId String   // Changed from @unique to allow multiple reviewers if needed later
   abstract   Abstract @relation(fields: [abstractId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
+
+  // Ensure one reviewer can only review an abstract once
+  @@unique([reviewerId, abstractId])
 }
 
 model PasswordResetToken {
@@ -122,4 +140,23 @@ model PasswordResetToken {
   token     String   @unique
   expires   DateTime
   createdAt DateTime @default(now())
+}
+
+model ActivityLog {
+  id          String   @id @default(cuid())
+  action      String   // e.g., "ROLE_CHANGE", "ABSTRACT_ASSIGNED"
+  details     String   // e.g., "Changed role of user@email.com to ADMIN"
+  adminId     String
+  adminName   String
+  targetId    String?  // The user or abstract being affected
+  createdAt   DateTime @default(now())
+}
+
+
+model SystemSettings {
+  id                Int      @id @default(1)
+  isSubmissionOpen  Boolean  @default(true)
+  conferenceDate    DateTime @default("2026-05-20T00:00:00Z")
+  registrationFee   Float    @default(150.00)
+  updatedAt         DateTime @updatedAt
 }
