@@ -82,7 +82,7 @@ export default function Navbar() {
             </div>
             <div className="flex flex-col">
               <h1 className="font-bold text-base md:text-xl tracking-tight text-white leading-none uppercase">
-                Conference <span className="text-[#C5A059]">DBA</span>
+                DBA <span className="text-[#C5A059]">Conference</span>
               </h1>
               <span className="text-[8px] md:text-[10px] text-white/40 font-medium uppercase tracking-[0.2em] mt-1">
                 International 2026
