@@ -109,12 +109,14 @@ export default function Contact() {
                   <div className="flex items-center gap-2">
                     <Mail size={16} className="text-[#C5A059]" />
                     <span className="text-xs text-slate-200">
-                      info@ewubd.edu
+                      helpdesk-scm@ewubd.edu
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Phone size={16} className="text-[#C5A059]" />
-                    <span className="text-xs text-slate-200">09666775577</span>
+                    <span className="text-xs text-slate-200">
+                      09666775577, Ext-213/132
+                    </span>
                   </div>
                 </div>
               </div>

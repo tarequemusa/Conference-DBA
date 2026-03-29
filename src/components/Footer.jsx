@@ -12,10 +12,12 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation"; // 🚀 Added for redirection logic
 import { useState } from "react";
 import AuthModal from "./AuthModal";
 
 export default function Footer() {
+  const router = useRouter(); // 🚀 Initialize router
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState("login");
 
@@ -29,6 +31,9 @@ export default function Footer() {
       const offsetPosition = elementPosition - offset;
 
       window.scrollTo({ top: offsetPosition, behavior: "smooth" });
+    } else {
+      // 🚀 Fallback: If element doesn't exist (on legal/schedule page), go home then scroll
+      router.push(`/#${id}`);
     }
   };
 
@@ -46,14 +51,18 @@ export default function Footer() {
         {/* Column 1: Branding */}
         <div className="space-y-6">
           <div className="flex items-center gap-4">
-            <div className="relative aspect-square w-14 h-14 bg-white/5 backdrop-blur-xl rounded-2xl overflow-hidden p-2 border border-white/10 shadow-2xl group cursor-pointer">
+            <Link
+              href="/"
+              className="relative aspect-square w-14 h-14 bg-white/5 backdrop-blur-xl rounded-2xl overflow-hidden p-2 border border-white/10 shadow-2xl group cursor-pointer"
+            >
               <Image
                 src="/images/logo.png"
                 alt="ICEBTM Logo"
                 fill
+                sizes="56px"
                 className="object-contain p-1 group-hover:scale-110 transition-transform duration-500"
               />
-            </div>
+            </Link>
             <h2 className="text-xl font-black tracking-tighter border-l-4 border-[#C5A059] pl-4 leading-tight uppercase">
               Conference <br />
               <span className="text-[#C5A059]">DBA</span> 2026
@@ -82,9 +91,25 @@ export default function Footer() {
             Quick Links
           </h3>
           <ul className="space-y-3 text-[13px] text-slate-400 font-medium">
-            {["About", "Speakers", "Guidelines", "Committee", "FAQ"].map(
-              (item) => (
-                <li key={item}>
+            {/* 🚀 Updated logic for Timeline and cross-page anchor links */}
+            {[
+              "About",
+              "Speakers",
+              "Timeline",
+              "Guidelines",
+              "Committee",
+              "FAQ",
+            ].map((item) => (
+              <li key={item}>
+                {item === "Timeline" ? (
+                  <Link
+                    href="/schedule"
+                    className="hover:text-[#C5A059] transition-colors flex items-center gap-2 group"
+                  >
+                    <span className="w-0 h-[1px] bg-[#C5A059] group-hover:w-3 transition-all"></span>
+                    Timeline
+                  </Link>
+                ) : (
                   <button
                     onClick={() => scrollToSection(item.toLowerCase())}
                     className="hover:text-[#C5A059] transition-colors flex items-center gap-2 group"
@@ -92,9 +117,9 @@ export default function Footer() {
                     <span className="w-0 h-[1px] bg-[#C5A059] group-hover:w-3 transition-all"></span>
                     {item === "Guidelines" ? "Important Dates" : item}
                   </button>
-                </li>
-              ),
-            )}
+                )}
+              </li>
+            ))}
           </ul>
         </div>
 
