@@ -77,7 +77,6 @@ export default function Partners() {
       </div>
 
       <div className="max-w-7xl mx-auto px-6 relative z-10 w-full flex flex-col justify-center h-full">
-        {/* Header Section - Restored font-black for titles */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 lg:mb-12">
           <div className="space-y-2 text-center md:text-left">
             <div className="flex items-center justify-center md:justify-start gap-2 text-[#C5A059] font-black text-[9px] md:text-[10px] uppercase tracking-[0.4em]">
@@ -88,7 +87,6 @@ export default function Partners() {
             </h3>
           </div>
 
-          {/* Category Filter - Fixed Scrolling & Clipping */}
           <div className="w-full lg:w-auto overflow-hidden relative">
             <div className="flex items-center gap-2 overflow-x-auto pb-4 -mb-4 pt-2 px-2 no-scrollbar touch-pan-x scroll-smooth">
               {categories.map((cat) => (
@@ -124,12 +122,12 @@ export default function Partners() {
                     src={partner.logo}
                     alt={partner.name}
                     fill
+                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16vw" // 🚀 FIXED: Added sizes prop to solve performance warning
                     className="object-contain"
                   />
                 </div>
               </div>
 
-              {/* Partner Name - Increased size & font-bold (Not black) */}
               <div className="mt-3 text-center px-1">
                 <h4 className="text-[11px] md:text-xs font-bold text-[#003366] uppercase tracking-tight leading-tight w-full group-hover:text-[#C5A059] transition-colors">
                   {partner.name}
@@ -142,7 +140,6 @@ export default function Partners() {
           ))}
         </div>
 
-        {/* Footer Support Section - Restored font-black for CTA */}
         <div className="mt-8 lg:mt-12 p-5 md:p-8 bg-white border border-slate-100 rounded-[2rem] lg:rounded-[2.5rem] shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 border-t-4 border-t-[#C5A059]">
           <div className="flex items-center gap-4 text-center md:text-left flex-col md:flex-row">
             <div className="w-12 h-12 bg-[#003366] rounded-2xl flex items-center justify-center text-[#C5A059] shadow-inner group">

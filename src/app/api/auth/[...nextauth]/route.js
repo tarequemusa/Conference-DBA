@@ -60,13 +60,11 @@ export const authOptions = {
       }
 
       // 2. Handle 'update' trigger (Manually called from frontend)
-      // This avoids constant database hits by updating the token only when needed
       if (trigger === "update" && session) {
         return { ...token, ...session };
       }
 
-      // 3. OPTIONAL: Periodic Sync (Better than every request)
-      // Only fetch from DB if the role or critical data is missing
+      // 3. Periodic Sync (Better than every request)
       if (!token.role && token.email) {
         const dbUser = await prisma.user.findUnique({
           where: { email: token.email },
@@ -103,7 +101,6 @@ export const authOptions = {
     signIn: "/", // Redirects to home for login
     error: "/", // Redirects to home on auth error
   },
-  // Ensure your NEXTAUTH_SECRET is set in .env
   secret: process.env.NEXTAUTH_SECRET,
   debug: process.env.NODE_ENV === "development",
 };

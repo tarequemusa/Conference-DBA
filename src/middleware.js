@@ -38,21 +38,11 @@ export default withAuth(
 export const config = {
   matcher: [
     /*
-     * Match all request paths except for the ones starting with:
-     * - api/auth (NextAuth internals)
-     * - api/schedule (Public API)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - images (public images)
-     * - logo.png (branded logo)
-     * - schedule (The public timeline page)
-     * - legal (🚀 ADDED: The public legal page)
-     * - $ (The root/landing page)
+     * 🚀 UPDATED REGEX:
+     * Excludes api/auth, api/contact, and public assets from being intercepted.
      */
-    "/((?!api/auth|api/schedule|_next/static|_next/image|favicon.ico|images|logo.png|schedule|legal|$).*)",
+    "/((?!api/auth|api/contact|api/schedule|_next/static|_next/image|favicon.ico|images|logo.png|schedule|legal|$).*)",
 
-    // Explicitly protect these route groups
     "/dashboard/:path*",
     "/admin/:path*",
     "/reviewer/:path*",
