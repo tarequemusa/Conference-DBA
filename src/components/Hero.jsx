@@ -76,7 +76,7 @@ export default function Hero() {
           {/* 🚀 OPTIMIZED TITLE FONT SIZE USING REM */}
           <h1 className="text-[2.25rem] sm:text-[2rem] md:text-[3rem] lg:text-[3.5rem] font-black leading-[1.1] tracking-tighter uppercase mb-6 animate-in fade-in slide-in-from-bottom-6 duration-1000">
             International Conference on <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#C5A059] to-[#E5C07B]">
+            <span className="text-[3rem] text-transparent bg-clip-text bg-gradient-to-r from-[#C5A059] to-[#E5C07B]">
               Building Resilient Supply Chains
             </span>
           </h1>
