@@ -140,7 +140,7 @@ export default function Footer() {
                   setAuthMode("login");
                   setIsAuthOpen(true);
                 }}
-                className="text-[13px] text-slate-400 hover:text-white transition font-medium"
+                className="group flex items-center justify-center gap-2 border border-white/30 bg-white/5 backdrop-blur-md px-8 py-4 rounded-xl font-bold uppercase text-[0.6875rem] tracking-widest hover:bg-white hover:text-[#003366] transition-all duration-300 active:scale-95"
               >
                 Login to Dashboard
               </button>
@@ -151,7 +151,7 @@ export default function Footer() {
                   setAuthMode("signup");
                   setIsAuthOpen(true);
                 }}
-                className="bg-[#C5A059] text-[#003366] px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-white transition-all shadow-xl active:scale-95"
+                className="group flex items-center justify-center gap-2 border border-white/30 bg-white/5 backdrop-blur-md px-8 py-4 rounded-xl font-bold uppercase text-[0.6875rem] tracking-widest hover:bg-white hover:text-[#003366] transition-all duration-300 active:scale-95"
               >
                 Register Now
               </button>
@@ -183,8 +183,11 @@ export default function Footer() {
             <p className="flex items-start gap-3">
               <MapPin className="text-[#C5A059] shrink-0" size={18} />
               <span className="leading-relaxed">
-                East West University <br /> A/2, Jahurul Islam Avenue <br />{" "}
-                Jahurul Islam City, Aftabnagar
+                <span className="text-[#C5A059] text-[15px]">
+                  East West University
+                </span>{" "}
+                <br /> A/2, Jahurul Islam Avenue <br /> Jahurul Islam City,
+                Aftabnagar
                 <br />
                 Dhaka-1212, Bangladesh
               </span>

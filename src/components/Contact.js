@@ -109,7 +109,7 @@ export default function Contact() {
                     />
                   </div>
                   <div className="flex flex-col">
-                    <h3 className="text-white font-black text-xl md:text-2xl leading-none tracking-tight uppercase">
+                    <h3 className="text-white font-black text-xl lg:text-xl md:text-2xl leading-none tracking-tight uppercase">
                       <span className="text-[#C5A059]">
                         East West University
                       </span>
@@ -139,16 +139,25 @@ export default function Contact() {
               <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-white/5 rounded-full"></div>
             </div>
 
-            <div className="p-6 rounded-[2rem] border border-slate-100 bg-slate-50 flex items-center justify-between">
-              <div>
-                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1">
+            <div className="group p-6 rounded-[2rem] border border-slate-100 bg-slate-50 flex items-center justify-between transition-all duration-500 hover:bg-[#003366] hover:border-[#003366] hover:shadow-2xl cursor-pointer">
+              <div className="transition-transform duration-500 group-hover:translate-x-1">
+                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1 transition-colors duration-500 group-hover:text-white/60">
                   Official Website
                 </p>
-                <p className="text-[#003366] font-bold text-sm">
+                <p className="text-[#003366] font-bold text-sm transition-colors duration-500 group-hover:text-white">
                   https://www.ewubd.edu
                 </p>
               </div>
-              <Globe size={24} className="text-slate-200" />
+
+              {/* 🚀 Active State: Navy Background + Gold Zoomed Globe */}
+              <div className="relative">
+                <Globe
+                  size={24}
+                  className="text-slate-200 transition-all duration-700 ease-out group-hover:text-[#C5A059] group-hover:scale-125"
+                />
+                {/* Dynamic glow effect restricted to hover state */}
+                <div className="absolute inset-0 bg-[#C5A059]/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+              </div>
             </div>
           </div>
 
