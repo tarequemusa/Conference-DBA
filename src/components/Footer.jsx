@@ -12,17 +12,20 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation"; // 🚀 Added for redirection logic
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import AuthModal from "./AuthModal";
 
 export default function Footer() {
-  const router = useRouter(); // 🚀 Initialize router
+  const router = useRouter();
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState("login");
 
   const scrollToSection = (id) => {
-    const element = document.getElementById(id);
+    // 🚀 FIX: Map "important dates" (with space) to "guidelines"
+    const sectionId = id === "important dates" ? "important-dates" : id;
+    const element = document.getElementById(sectionId);
+
     if (element) {
       const offset = 80;
       const bodyRect = document.body.getBoundingClientRect().top;
@@ -32,8 +35,8 @@ export default function Footer() {
 
       window.scrollTo({ top: offsetPosition, behavior: "smooth" });
     } else {
-      // 🚀 Fallback: If element doesn't exist (on legal/schedule page), go home then scroll
-      router.push(`/#${id}`);
+      // 🚀 Fallback for cross-page navigation
+      router.push(`/#${sectionId}`);
     }
   };
 
@@ -42,7 +45,6 @@ export default function Footer() {
   };
 
   return (
-    /* Changed pb-12 to pb-36 and md:pb-20 to md:pb-24 to fix ticker overlap */
     <footer className="bg-[#003366] text-white pt-16 pb-36 md:pb-24 px-6 relative overflow-hidden border-t border-white/5">
       {/* Subtle Ambient Glow */}
       <div className="absolute top-0 right-0 w-96 h-96 bg-[#C5A059]/10 rounded-full -mr-48 -mt-48 blur-[120px] pointer-events-none"></div>
@@ -57,20 +59,23 @@ export default function Footer() {
             >
               <Image
                 src="/images/logo.png"
-                alt="ICEBTM Logo"
+                alt="EWU Logo"
                 fill
                 sizes="56px"
                 className="object-contain p-1 group-hover:scale-110 transition-transform duration-500"
               />
             </Link>
             <h2 className="text-xl font-black tracking-tighter border-l-4 border-[#C5A059] pl-4 leading-tight uppercase">
-              Conference <br />
-              <span className="text-[#C5A059]">DBA</span> 2026
+              DBA
+              <span className="text-[#C5A059]"> Conference</span>
+              <br /> 2026
             </h2>
           </div>
           <p className="text-slate-400 text-sm leading-relaxed max-w-xs">
-            International Conference on Economics, Business and Technology
-            Management. Shaping sustainable global research.
+            The Conference on Building Resilient Supply Chains offers a vibrant
+            forum for exploring how organizations can effectively anticipate,
+            withstand, and recover from disruptions in today's volatile global
+            landscape.
           </p>
           <div className="flex gap-3">
             {[Facebook, Twitter, Linkedin, Instagram].map((Icon, i) => (
@@ -91,12 +96,12 @@ export default function Footer() {
             Quick Links
           </h3>
           <ul className="space-y-3 text-[13px] text-slate-400 font-medium">
-            {/* 🚀 Updated logic for Timeline and cross-page anchor links */}
             {[
               "About",
               "Speakers",
               "Timeline",
               "Guidelines",
+              "Important Dates",
               "Committee",
               "FAQ",
             ].map((item) => (
@@ -115,7 +120,7 @@ export default function Footer() {
                     className="hover:text-[#C5A059] transition-colors flex items-center gap-2 group"
                   >
                     <span className="w-0 h-[1px] bg-[#C5A059] group-hover:w-3 transition-all"></span>
-                    {item === "Guidelines" ? "Important Dates" : item}
+                    {item}
                   </button>
                 )}
               </li>
@@ -151,6 +156,17 @@ export default function Footer() {
                 Register Now
               </button>
             </li>
+            <li>
+              <button
+                onClick={() => {
+                  setAuthMode("signup");
+                  setIsAuthOpen(true);
+                }}
+                className="group flex items-center justify-center gap-2 border border-white/30 bg-white/5 backdrop-blur-md px-8 py-4 rounded-xl font-bold uppercase text-[0.6875rem] tracking-widest hover:bg-white hover:text-[#003366] transition-all duration-300 active:scale-95"
+              >
+                Call for Paper
+              </button>
+            </li>
             <li className="text-[11px] text-slate-500 mt-4 italic flex items-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
               Submission portal is active.
@@ -167,7 +183,10 @@ export default function Footer() {
             <p className="flex items-start gap-3">
               <MapPin className="text-[#C5A059] shrink-0" size={18} />
               <span className="leading-relaxed">
-                East West University, <br /> Aftabnagar, Dhaka-1212
+                East West University <br /> A/2, Jahurul Islam Avenue <br />{" "}
+                Jahurul Islam City, Aftabnagar
+                <br />
+                Dhaka-1212, Bangladesh
               </span>
             </p>
             <p className="flex items-center gap-3 group">
@@ -176,12 +195,12 @@ export default function Footer() {
                 size={18}
               />
               <span className="group-hover:text-white transition-colors">
-                info@ewubd.edu
+                helpdesk-scm@ewubd.edu
               </span>
             </p>
             <p className="flex items-center gap-3">
               <Phone className="text-[#C5A059] shrink-0" size={18} />
-              <span>+880 9666775577</span>
+              <span>+880 9666775577, Ext-213/132</span>
             </p>
           </div>
         </div>

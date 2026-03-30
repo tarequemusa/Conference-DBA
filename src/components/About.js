@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, GitBranch, School, X } from "lucide-react";
+import { ArrowRight, GitBranch, School, Trophy, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export default function About() {
@@ -42,6 +42,14 @@ export default function About() {
       </div>
 
       <div className="max-w-7xl mx-auto w-full h-full flex flex-col justify-center relative z-10">
+        <div className="mb-6 md:mb-10 text-center lg:text-left">
+          <div className="inline-flex items-center gap-2 text-[#C5A059] font-black text-[9px] md:text-[10px] uppercase tracking-[0.4em] mb-2 bg-[#C5A059]/10 px-3 py-1 rounded-full">
+            <Trophy size={12} /> Anticipate. Adapt. Transform
+          </div>
+          <h3 className="text-3xl md:text-5xl lg:text-6xl font-black text-[#003366] uppercase tracking-tighter leading-none">
+            About <span className="text-[#C5A059]">The Conference</span>
+          </h3>
+        </div>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 xl:gap-16 items-center">
           {/* LEFT: IMAGE & LOGO OVERLAY */}
           <div className="lg:col-span-5 hidden md:block">

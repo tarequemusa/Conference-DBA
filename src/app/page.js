@@ -38,9 +38,11 @@ export default function Home() {
       <section id="highlights" className="scroll-mt-20">
         <Highlights />
       </section>
+      <section id="important-dates" className="scroll-mt-20">
+        <ImportantDates />
+      </section>
       <section id="guidelines" className="scroll-mt-20">
         <Guidelines />
-        <ImportantDates />
       </section>
       <section id="speakers" className="scroll-mt-20">
         <Speakers />

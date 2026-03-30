@@ -6,28 +6,28 @@ export default function KeyDates() {
   const dates = [
     {
       title: "Abstract Submission",
-      date: "May 15, 2026",
+      date: "June 30, 2026",
       icon: FileCheck,
       color: "text-[#003366]",
       bg: "bg-[#003366]/5",
     },
     {
       title: "Acceptance Notification",
-      date: "June 01, 2026",
+      date: "July 30, 2026",
       icon: Bell,
       color: "text-[#C5A059]",
       bg: "bg-[#C5A059]/10",
     },
     {
-      title: "Early Bird Registration",
-      date: "June 15, 2026",
+      title: "Full Paper Submission",
+      date: "August 30, 2026",
       icon: CreditCard,
       color: "text-[#003366]",
       bg: "bg-[#003366]/5",
     },
     {
-      title: "Conference Dates",
-      date: "July 20-21, 2026",
+      title: "Final Notification",
+      date: "September 30, 2026",
       icon: Calendar,
       color: "text-[#C5A059]",
       bg: "bg-[#C5A059]/10",
@@ -36,7 +36,7 @@ export default function KeyDates() {
 
   return (
     <section
-      id="guidelines"
+      id="importantdates"
       // Change: min-h-screen with flex centering and responsive padding
       className="min-h-screen w-full flex items-center justify-center bg-[#FDFCFB] relative overflow-hidden py-24 md:py-16"
     >

@@ -100,8 +100,24 @@ export default function Contact() {
                 <h4 className="text-xl font-bold mb-2 uppercase tracking-tighter">
                   Conference Venue
                 </h4>
-                <p className="text-slate-300 leading-snug text-sm mb-4">
-                  East West University Auditorium
+                <div className="flex items-center gap-5 relative z-10">
+                  <div className="w-14 h-14 bg-white/10 backdrop-blur-md rounded-2xl p-2 border border-white/20">
+                    <img
+                      src="/images/logo.png"
+                      alt="Logo"
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <h3 className="text-white font-black text-xl md:text-2xl leading-none tracking-tight uppercase">
+                      <span className="text-[#C5A059]">
+                        East West University
+                      </span>
+                    </h3>
+                  </div>
+                </div>
+                <p className="text-slate-300 leading-snug text-sm mt-4 mb-4">
+                  A/2, Jahurul Islam Avenue, Jahurul Islam City
                   <br />
                   Aftabnagar, Dhaka-1212, Bangladesh
                 </p>

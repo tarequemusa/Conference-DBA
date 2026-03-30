@@ -4,8 +4,8 @@ import { Toaster } from "react-hot-toast";
 import "../styles/globals.css";
 
 export const metadata = {
-  title: "Conference DBA 2026",
-  description: "International Conference on Economics and Business",
+  title: "DBA Conference 2026",
+  description: "International Conference on Building Resilient Supply Chains",
   icons: {
     icon: "/favicon.ico",
     shortcut: "/favicon-32x32.png",
