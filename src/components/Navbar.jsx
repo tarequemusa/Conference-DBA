@@ -20,8 +20,8 @@ export default function Navbar() {
 
   const navLinks = [
     { name: "About", id: "about" },
-    { name: "Guidelines", id: "guidelines" },
     { name: "Dates", id: "important-dates" },
+    { name: "Guidelines", id: "guidelines" },
     { name: "Committee", id: "committee" },
     { name: "Pricing", id: "pricing" },
     { name: "Partners", id: "partners" },
@@ -204,7 +204,8 @@ export default function Navbar() {
               </div>
               <div className="flex flex-col uppercase leading-tight">
                 <h2 className="text-[#C5A059] font-black text-sm">
-                  DBA <span className="text-[#C5A059]">CONFERENCE</span>
+                  <span className="text-[rgb(255,255,255)]">DBA</span>{" "}
+                  CONFERENCE
                 </h2>
                 <p className="text-[9px] text-white/40 font-bold tracking-[0.1em]">
                   INTERNATIONAL 2026

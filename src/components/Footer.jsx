@@ -22,7 +22,6 @@ export default function Footer() {
   const [authMode, setAuthMode] = useState("login");
 
   const scrollToSection = (id) => {
-    // 🚀 FIX: Map "important dates" (with space) to "guidelines"
     const sectionId = id === "important dates" ? "important-dates" : id;
     const element = document.getElementById(sectionId);
 
@@ -35,7 +34,6 @@ export default function Footer() {
 
       window.scrollTo({ top: offsetPosition, behavior: "smooth" });
     } else {
-      // 🚀 Fallback for cross-page navigation
       router.push(`/#${sectionId}`);
     }
   };
@@ -128,50 +126,44 @@ export default function Footer() {
           </ul>
         </div>
 
-        {/* Column 3: Researcher Portal */}
-        <div>
+        {/* 🚀 Column 3: Researcher Portal (Updated for Uniform Button Length) */}
+        <div className="flex flex-col items-start">
           <h3 className="text-[#C5A059] font-black mb-6 uppercase tracking-[0.2em] text-[11px]">
             Researcher Portal
           </h3>
-          <ul className="space-y-4">
-            <li>
-              <button
-                onClick={() => {
-                  setAuthMode("login");
-                  setIsAuthOpen(true);
-                }}
-                className="group flex items-center justify-center gap-2 border border-white/30 bg-white/5 backdrop-blur-md px-8 py-4 rounded-xl font-bold uppercase text-[0.6875rem] tracking-widest hover:bg-white hover:text-[#003366] transition-all duration-300 active:scale-95"
-              >
-                Login to Dashboard
-              </button>
-            </li>
-            <li>
-              <button
-                onClick={() => {
-                  setAuthMode("signup");
-                  setIsAuthOpen(true);
-                }}
-                className="group flex items-center justify-center gap-2 border border-white/30 bg-white/5 backdrop-blur-md px-8 py-4 rounded-xl font-bold uppercase text-[0.6875rem] tracking-widest hover:bg-white hover:text-[#003366] transition-all duration-300 active:scale-95"
-              >
-                Register Now
-              </button>
-            </li>
-            <li>
-              <button
-                onClick={() => {
-                  setAuthMode("signup");
-                  setIsAuthOpen(true);
-                }}
-                className="group flex items-center justify-center gap-2 border border-white/30 bg-white/5 backdrop-blur-md px-8 py-4 rounded-xl font-bold uppercase text-[0.6875rem] tracking-widest hover:bg-white hover:text-[#003366] transition-all duration-300 active:scale-95"
-              >
-                Call for Paper
-              </button>
-            </li>
-            <li className="text-[11px] text-slate-500 mt-4 italic flex items-center gap-2">
+          <div className="flex flex-col gap-3 w-full max-w-[240px]">
+            <button
+              onClick={() => {
+                setAuthMode("login");
+                setIsAuthOpen(true);
+              }}
+              className="w-full flex items-center justify-center border border-white/20 bg-white/5 backdrop-blur-md px-6 py-4 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-white hover:text-[#003366] transition-all duration-300 active:scale-95 shadow-sm"
+            >
+              Login to Dashboard
+            </button>
+            <button
+              onClick={() => {
+                setAuthMode("signup");
+                setIsAuthOpen(true);
+              }}
+              className="w-full flex items-center justify-center border border-white/20 bg-white/5 backdrop-blur-md px-6 py-4 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-white hover:text-[#003366] transition-all duration-300 active:scale-95 shadow-sm"
+            >
+              Register Now
+            </button>
+            <button
+              onClick={() => {
+                setAuthMode("signup");
+                setIsAuthOpen(true);
+              }}
+              className="w-full flex items-center justify-center border border-white/20 bg-white/5 backdrop-blur-md px-6 py-4 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-white hover:text-[#003366] transition-all duration-300 active:scale-95 shadow-sm"
+            >
+              Call for Paper
+            </button>
+            <div className="text-[10px] text-slate-500 mt-2 italic flex items-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
               Submission portal is active.
-            </li>
-          </ul>
+            </div>
+          </div>
         </div>
 
         {/* Column 4: Contact Info */}
@@ -212,7 +204,8 @@ export default function Footer() {
       {/* Bottom Bar */}
       <div className="max-w-7xl mx-auto mt-16 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6 text-[10px] font-medium text-slate-500 uppercase tracking-widest">
         <p className="text-center md:text-left">
-          © 2026 Conference DBA. Managed by SWD of ICS, EWU.
+          Copyright © 2026 | DBA Conference | All Rights Reserved | Developed by
+          ICS, EWU.
         </p>
 
         <div className="flex gap-8">
