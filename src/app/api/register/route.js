@@ -12,9 +12,12 @@ export async function POST(request) {
       return NextResponse.json({ error: "Missing fields" }, { status: 400 });
     }
 
-    // 2. Check if user already exists
+    // 🚀 FIX: Normalize email (Trim spaces and force lowercase)
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // 2. Check if user already exists using normalized email
     const existingUser = await prisma.user.findUnique({
-      where: { email },
+      where: { email: normalizedEmail },
     });
 
     if (existingUser) {
@@ -28,23 +31,25 @@ export async function POST(request) {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // 4. Create the user
-    // Note: Role defaults to RESEARCHER if not specified in your schema
+    // Using normalizedEmail ensures login works every time
     const user = await prisma.user.create({
       data: {
-        name,
-        email,
+        name: name.trim(),
+        email: normalizedEmail,
         password: hashedPassword,
-        role: "RESEARCHER", // Ensuring they start as a researcher
+        role: "RESEARCHER",
       },
     });
 
+    // 🚀 Log success to terminal to verify DB write
+    console.log("✅ User created in Prisma:", user.email);
+
     return NextResponse.json({ message: "User created" }, { status: 201 });
   } catch (error) {
-    // Check your terminal for this log if registration fails!
     console.error("REGISTRATION_API_ERROR:", error);
 
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      { error: "Internal Server Error", details: error.message },
       { status: 500 },
     );
   }

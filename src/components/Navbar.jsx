@@ -47,7 +47,6 @@ export default function Navbar() {
   useEffect(() => {
     setMounted(true);
 
-    // 🚀 FIX: Handle initial scroll state immediately on mount/refresh
     const handleInitialState = () => {
       const scrollPos = window.scrollY;
       setIsScrolled(scrollPos > 10);
@@ -75,13 +74,13 @@ export default function Navbar() {
       });
     };
 
-    handleInitialState(); // Run once immediately
+    handleInitialState();
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   if (!mounted)
-    return <div className="h-20 bg-[#002147] fixed top-0 w-full z-[100]" />;
+    return <div className="h-20 bg-transparent fixed top-0 w-full z-[100]" />;
 
   return (
     <>
@@ -89,11 +88,11 @@ export default function Navbar() {
         className={`fixed top-0 left-0 w-full z-[100] transition-all duration-500 ${
           isScrolled
             ? "bg-[#002147]/95 backdrop-blur-xl shadow-2xl py-2"
-            : "bg-[#002147] py-3"
+            : "bg-transparent py-3" // 🚀 Background removed for initial state
         }`}
       >
         <div className="max-w-7xl mx-auto px-4 lg:px-8">
-          {/* 🚀 TOP CONTACT BAR */}
+          {/* TOP CONTACT BAR */}
           <div
             className={`hidden lg:flex justify-end transition-all duration-500 ${isScrolled ? "h-0 opacity-0 overflow-hidden" : "h-9 opacity-100 mb-1"}`}
           >
@@ -216,10 +215,9 @@ export default function Navbar() {
                   className="object-contain p-1"
                 />
               </div>
-              <div className="flex flex-col uppercase leading-tight">
+              <div className="flex flex-col uppercase leading-tight text-white">
                 <h2 className="text-[#C5A059] font-black text-sm">
-                  <span className="text-[rgb(255,255,255)]">DBA</span>{" "}
-                  CONFERENCE
+                  <span className="text-white">DBA</span> CONFERENCE
                 </h2>
                 <p className="text-[9px] text-white/40 font-bold tracking-[0.1em]">
                   INTERNATIONAL 2026

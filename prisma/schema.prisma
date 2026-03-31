@@ -7,46 +7,21 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Roles for access control
-enum UserRole {
-  RESEARCHER
-  REVIEWER
-  ADMIN
-  AUTHORITY
-}
-
-// Paper progression status
-enum ProcessStatus {
-  ABSTRACT_SUBMISSION
-  INITIAL_EVALUATION
-  ACCEPTANCE_NOTIFICATION
-  PAYMENT_PENDING
-  CONFIRMED
-  FULL_PAPER_SUBMISSION
-  PEER_REVIEW
-  REVISION_REQUIRED
-  FINAL_DECISION
-  REJECTED                // Added for Authority Rejection
-}
-
 model User {
-  id            String    @id @default(cuid())
+  id            String     @id @default(cuid())
   name          String?
-  email         String?   @unique
+  email         String?    @unique
   emailVerified DateTime?
-  image         String?   // Profile Photo URL
-  password      String?   // Hashed password (null for Google users)
-  signature     String?   @db.Text // Stores base64 signature image
-  role          UserRole  @default(RESEARCHER)
-
-  // Timestamps
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  accounts  Account[]
-  sessions  Session[]
-  abstracts Abstract[]
-  reviews   Review[]   @relation("ReviewerDocs")
+  image         String?
+  password      String?
+  role          UserRole   @default(RESEARCHER)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  signature     String?
+  abstracts     Abstract[]
+  accounts      Account[]
+  reviews       Review[]   @relation("ReviewerDocs")
+  sessions      Session[]
 }
 
 model Account {
@@ -55,15 +30,14 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -85,54 +59,41 @@ model VerificationToken {
 }
 
 model Abstract {
-  id        String        @id @default(cuid())
-  title     String
-  coAuthors String?
-  abstract  String        @db.Text
-  status        String    @default("ABSTRACT_SUBMISSION")
-
-  // Payment tracking fields
-  isPaid          Boolean @default(false)
+  id              String   @id @default(cuid())
+  title           String
+  coAuthors       String?
+  abstract        String
+  isPaid          Boolean  @default(false)
   paymentAmount   Float?
-  transactionId String?   // For SSL Commerz later
-  stripeSessionId String? @unique
-  fullPaperUrl    String?   // URL to the PDF/Doc file
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  scheduledSlot  String?  // References "slot-1", "slot-2", etc.
-
-  userId     String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  reviews    Review[]
-  
-  // Link to the specific reviewer assigned
-  reviewerId String?
+  stripeSessionId String?  @unique
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  userId          String
+  reviewerId      String?
+  fullPaperUrl    String?
+  transactionId   String?
+  status          String   @default("ABSTRACT_SUBMISSION")
+  scheduledSlot   String?
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reviews         Review[]
 }
 
 model Review {
-  id              String  @id @default(cuid())
-  
-  // Rubric Scores
-  originality    Int     @default(0)
-  methodology    Int     @default(0)
-  relevance      Int     @default(0)
-  clarity        Int     @default(0)
-  totalScore     Int     @default(0)
-  
-  comments       String  @db.Text
-  recommendation String? // e.g., "ACCEPT", "REJECT"
-  isFinal        Boolean @default(false)
+  id             String   @id @default(cuid())
+  originality    Int      @default(0)
+  methodology    Int      @default(0)
+  relevance      Int      @default(0)
+  clarity        Int      @default(0)
+  totalScore     Int      @default(0)
+  comments       String
+  recommendation String?
+  isFinal        Boolean  @default(false)
+  reviewerId     String
+  abstractId     String
+  createdAt      DateTime @default(now())
+  abstract       Abstract @relation(fields: [abstractId], references: [id], onDelete: Cascade)
+  reviewer       User     @relation("ReviewerDocs", fields: [reviewerId], references: [id])
 
-  reviewerId String
-  reviewer   User     @relation("ReviewerDocs", fields: [reviewerId], references: [id])
-  abstractId String   // Changed from @unique to allow multiple reviewers if needed later
-  abstract   Abstract @relation(fields: [abstractId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-
-  // Ensure one reviewer can only review an abstract once
   @@unique([reviewerId, abstractId])
 }
 
@@ -145,20 +106,39 @@ model PasswordResetToken {
 }
 
 model ActivityLog {
-  id          String   @id @default(cuid())
-  action      String   // e.g., "ROLE_CHANGE", "ABSTRACT_ASSIGNED"
-  details     String   // e.g., "Changed role of user@email.com to ADMIN"
-  adminId     String
-  adminName   String
-  targetId    String?  // The user or abstract being affected
-  createdAt   DateTime @default(now())
+  id        String   @id @default(cuid())
+  action    String
+  details   String
+  adminId   String
+  adminName String
+  targetId  String?
+  createdAt DateTime @default(now())
 }
 
-
 model SystemSettings {
-  id                Int      @id @default(1)
-  isSubmissionOpen  Boolean  @default(true)
-  conferenceDate    DateTime @default("2026-05-20T00:00:00Z")
-  registrationFee   Float    @default(150.00)
-  updatedAt         DateTime @updatedAt
+  id               Int      @id @default(1)
+  isSubmissionOpen Boolean  @default(true)
+  conferenceDate   DateTime @default(dbgenerated("'2026-05-20 00:00:00'::timestamp without time zone"))
+  registrationFee  Float    @default(150.00)
+  updatedAt        DateTime @updatedAt
+}
+
+enum UserRole {
+  RESEARCHER
+  REVIEWER
+  ADMIN
+  AUTHORITY
+}
+
+enum ProcessStatus {
+  ABSTRACT_SUBMISSION
+  INITIAL_EVALUATION
+  ACCEPTANCE_NOTIFICATION
+  PAYMENT_PENDING
+  CONFIRMED
+  FULL_PAPER_SUBMISSION
+  PEER_REVIEW
+  REVISION_REQUIRED
+  FINAL_DECISION
+  REJECTED
 }
