@@ -46,9 +46,17 @@ export default function Navbar() {
 
   useEffect(() => {
     setMounted(true);
+
+    // 🚀 FIX: Handle initial scroll state immediately on mount/refresh
+    const handleInitialState = () => {
+      const scrollPos = window.scrollY;
+      setIsScrolled(scrollPos > 10);
+    };
+
     const handleScroll = () => {
       const scrollPos = window.scrollY;
       setIsScrolled(scrollPos > 10);
+
       if (scrollPos < 300) {
         setActiveSection("");
         return;
@@ -66,20 +74,26 @@ export default function Navbar() {
         }
       });
     };
+
+    handleInitialState(); // Run once immediately
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   if (!mounted)
-    return <div className="h-20 bg-transparent fixed top-0 w-full z-[100]" />;
+    return <div className="h-20 bg-[#002147] fixed top-0 w-full z-[100]" />;
 
   return (
     <>
       <nav
-        className={`fixed top-0 left-0 w-full z-[100] transition-all duration-500 ${isScrolled ? "bg-[#002147]/95 backdrop-blur-xl shadow-2xl py-2" : "bg-transparent py-3"}`}
+        className={`fixed top-0 left-0 w-full z-[100] transition-all duration-500 ${
+          isScrolled
+            ? "bg-[#002147]/95 backdrop-blur-xl shadow-2xl py-2"
+            : "bg-[#002147] py-3"
+        }`}
       >
         <div className="max-w-7xl mx-auto px-4 lg:px-8">
-          {/* 🚀 TOP CONTACT BAR: Increased Font Size */}
+          {/* 🚀 TOP CONTACT BAR */}
           <div
             className={`hidden lg:flex justify-end transition-all duration-500 ${isScrolled ? "h-0 opacity-0 overflow-hidden" : "h-9 opacity-100 mb-1"}`}
           >
@@ -180,7 +194,7 @@ export default function Navbar() {
         </div>
       </nav>
 
-      {/* --- MOBILE DRAWER (Separator Style) --- */}
+      {/* --- MOBILE DRAWER --- */}
       <div
         className={`fixed inset-0 z-[200] lg:hidden transition-all duration-500 ${isMobileMenuOpen ? "visible" : "invisible"}`}
       >
