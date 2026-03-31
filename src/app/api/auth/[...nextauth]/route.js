@@ -11,7 +11,6 @@ export const authOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
-      // Allow Google to link to existing accounts with the same email
       allowDangerousEmailAccountLinking: true,
     }),
     CredentialsProvider({
@@ -65,15 +64,20 @@ export const authOptions = {
       }
 
       // 3. Periodic Sync (Better than every request)
+      // Added a try-catch and specific check to prevent fetch errors
       if (!token.role && token.email) {
-        const dbUser = await prisma.user.findUnique({
-          where: { email: token.email },
-          select: { role: true, signature: true, image: true },
-        });
-        if (dbUser) {
-          token.role = dbUser.role;
-          token.signature = dbUser.signature;
-          token.picture = dbUser.image;
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { email: token.email },
+            select: { role: true, signature: true, image: true },
+          });
+          if (dbUser) {
+            token.role = dbUser.role;
+            token.signature = dbUser.signature;
+            token.picture = dbUser.image;
+          }
+        } catch (error) {
+          console.error("JWT Callback Error:", error);
         }
       }
 
@@ -98,10 +102,11 @@ export const authOptions = {
     maxAge: 30 * 24 * 60 * 60, // 30 Days
   },
   pages: {
-    signIn: "/", // Redirects to home for login
-    error: "/", // Redirects to home on auth error
+    signIn: "/",
+    error: "/",
   },
   secret: process.env.NEXTAUTH_SECRET,
+  // Debug enabled to help you see the exact fetch issue in the terminal
   debug: process.env.NODE_ENV === "development",
 };
 
