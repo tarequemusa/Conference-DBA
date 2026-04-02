@@ -39,11 +39,8 @@ function ResetForm() {
   const handleReset = async (e) => {
     e.preventDefault();
     if (!token) return toast.error("Invalid session link.");
-
-    // Validation for matching passwords
-    if (password !== confirmPassword) {
+    if (password !== confirmPassword)
       return toast.error("Passwords do not match.");
-    }
 
     setLoading(true);
     try {
@@ -68,15 +65,11 @@ function ResetForm() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F8FAFC]">
-      {/* Background Gradient for visibility of white Navbar text */}
       <div className="absolute top-0 left-0 right-0 h-[50vh] bg-gradient-to-b from-[#003366] to-transparent pointer-events-none z-0" />
-
-      {/* Navbar Container */}
       <div className="relative z-50">
         <Navbar />
       </div>
 
-      {/* Main Content Area with padding-top gap to avoid Navbar overlap */}
       <main className="flex-grow flex items-center justify-center p-4 relative z-10 pt-28 pb-16 md:pt-40 md:pb-24">
         <div className="bg-white w-full max-w-lg p-8 md:p-12 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,51,102,0.15)] border border-white relative overflow-hidden">
           <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#003366] via-[#C5A059] to-[#003366]" />
@@ -96,7 +89,6 @@ function ResetForm() {
               </div>
 
               <form onSubmit={handleReset} className="space-y-4">
-                {/* Field 1: New Password */}
                 <div className="relative group">
                   <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#C5A059] transition-colors">
                     <ShieldCheck size={18} />
@@ -112,13 +104,12 @@ function ResetForm() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#003366] transition-colors p-1"
+                    className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#003366] p-1"
                   >
                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
                 </div>
 
-                {/* Field 2: Confirm Password */}
                 <div className="relative group">
                   <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#C5A059] transition-colors">
                     <Lock size={18} />
@@ -158,7 +149,6 @@ function ResetForm() {
               <p className="text-slate-500 text-sm font-medium px-4 mt-2">
                 Your password has been updated successfully.
               </p>
-
               <div className="mt-10 p-6 bg-slate-50 rounded-[2rem] border border-slate-100 flex flex-col items-center gap-2">
                 <span className="text-[10px] uppercase tracking-[0.2em] text-slate-400 font-black">
                   Redirecting in
@@ -181,7 +171,6 @@ function ResetForm() {
           )}
         </div>
       </main>
-
       <footer className="mt-auto relative z-10">
         <Footer />
       </footer>

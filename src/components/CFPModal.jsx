@@ -36,7 +36,7 @@ export default function CFPModal({ isOpen, onClose, onStartSubmission }) {
             </div>
             <div className="flex flex-col">
               <h2 className="text-white font-black text-sm md:text-lg leading-none tracking-tight uppercase">
-                CONFERENCE <span className="text-[#C5A059]">DBA</span>
+                DBA <span className="text-[#C5A059]">CONFERENCE</span>
               </h2>
               <span className="text-white/60 text-[8px] md:text-[10px] tracking-[0.2em] mt-1 font-medium uppercase">
                 INTERNATIONAL 2026

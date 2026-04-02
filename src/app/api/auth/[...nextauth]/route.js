@@ -24,11 +24,18 @@ export const authOptions = {
           throw new Error("Please enter an email and password");
         }
 
+        // 🚀 Normalize input to match the Registration logic
+        const normalizedEmail = credentials.email.toLowerCase().trim();
+
         const user = await prisma.user.findUnique({
-          where: { email: credentials.email.toLowerCase() },
+          where: { email: normalizedEmail },
         });
 
         if (!user || !user.password) {
+          console.log(
+            "❌ LOGIN_FAIL: No user/password found for",
+            normalizedEmail,
+          );
           throw new Error("No user found with this email");
         }
 
@@ -38,9 +45,11 @@ export const authOptions = {
         );
 
         if (!isPasswordCorrect) {
+          console.log("❌ LOGIN_FAIL: Password mismatch for", normalizedEmail);
           throw new Error("Incorrect password");
         }
 
+        console.log("✅ LOGIN_SUCCESS:", user.email);
         return user;
       },
     }),
@@ -48,7 +57,6 @@ export const authOptions = {
 
   callbacks: {
     async jwt({ token, user, trigger, session }) {
-      // 1. Initial sign-in: Capture everything into the JWT
       if (user) {
         token.id = user.id;
         token.role = user.role;
@@ -58,17 +66,14 @@ export const authOptions = {
         token.picture = user.image;
       }
 
-      // 2. Handle 'update' trigger (Manually called from frontend)
       if (trigger === "update" && session) {
         return { ...token, ...session };
       }
 
-      // 3. Periodic Sync (Better than every request)
-      // Added a try-catch and specific check to prevent fetch errors
       if (!token.role && token.email) {
         try {
           const dbUser = await prisma.user.findUnique({
-            where: { email: token.email },
+            where: { email: token.email.toLowerCase().trim() },
             select: { role: true, signature: true, image: true },
           });
           if (dbUser) {
@@ -99,14 +104,13 @@ export const authOptions = {
 
   session: {
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 Days
+    maxAge: 30 * 24 * 60 * 60,
   },
   pages: {
     signIn: "/",
     error: "/",
   },
   secret: process.env.NEXTAUTH_SECRET,
-  // Debug enabled to help you see the exact fetch issue in the terminal
   debug: process.env.NODE_ENV === "development",
 };
 

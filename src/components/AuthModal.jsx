@@ -5,19 +5,212 @@ import {
   ExternalLink,
   Eye,
   EyeOff,
+  Globe,
   Loader2,
   Lock,
   Mail,
   RotateCcw,
-  Scale,
-  ShieldCheck,
   User,
+  Users,
   X,
 } from "lucide-react";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
+
+const countries = [
+  "Afghanistan",
+  "Albania",
+  "Algeria",
+  "Andorra",
+  "Angola",
+  "Antigua and Barbuda",
+  "Argentina",
+  "Armenia",
+  "Australia",
+  "Austria",
+  "Azerbaijan",
+  "Bahamas",
+  "Bahrain",
+  "Bangladesh",
+  "Barbados",
+  "Belarus",
+  "Belgium",
+  "Belize",
+  "Benin",
+  "Bhutan",
+  "Bolivia",
+  "Bosnia and Herzegovina",
+  "Botswana",
+  "Brazil",
+  "Brunei",
+  "Bulgaria",
+  "Burkina Faso",
+  "Burundi",
+  "Cabo Verde",
+  "Cambodia",
+  "Cameroon",
+  "Canada",
+  "Central African Republic",
+  "Chad",
+  "Chile",
+  "China",
+  "Colombia",
+  "Comoros",
+  "Congo",
+  "Costa Rica",
+  "Croatia",
+  "Cuba",
+  "Cyprus",
+  "Czech Republic",
+  "Denmark",
+  "Djibouti",
+  "Dominica",
+  "Dominican Republic",
+  "Ecuador",
+  "Egypt",
+  "El Salvador",
+  "Equatorial Guinea",
+  "Eritrea",
+  "Estonia",
+  "Eswatini",
+  "Ethiopia",
+  "Fiji",
+  "Finland",
+  "France",
+  "Gabon",
+  "Gambia",
+  "Georgia",
+  "Germany",
+  "Ghana",
+  "Greece",
+  "Grenada",
+  "Guatemala",
+  "Guinea",
+  "Guyana",
+  "Haiti",
+  "Honduras",
+  "Hungary",
+  "Iceland",
+  "India",
+  "Indonesia",
+  "Iran",
+  "Iraq",
+  "Ireland",
+  "Israel",
+  "Italy",
+  "Jamaica",
+  "Japan",
+  "Jordan",
+  "Kazakhstan",
+  "Kenya",
+  "Kiribati",
+  "Korea, North",
+  "Korea, South",
+  "Kuwait",
+  "Kyrgyzstan",
+  "Laos",
+  "Latvia",
+  "Lebanon",
+  "Lesotho",
+  "Liberia",
+  "Libya",
+  "Liechtenstein",
+  "Lithuania",
+  "Luxembourg",
+  "Madagascar",
+  "Malawi",
+  "Malaysia",
+  "Maldives",
+  "Mali",
+  "Malta",
+  "Marshall Islands",
+  "Mauritania",
+  "Mauritius",
+  "Mexico",
+  "Micronesia",
+  "Moldova",
+  "Monaco",
+  "Mongolia",
+  "Montenegro",
+  "Morocco",
+  "Mozambique",
+  "Myanmar",
+  "Namibia",
+  "Nauru",
+  "Nepal",
+  "Netherlands",
+  "New Zealand",
+  "Nicaragua",
+  "Niger",
+  "Nigeria",
+  "North Macedonia",
+  "Norway",
+  "Oman",
+  "Pakistan",
+  "Palau",
+  "Palestine",
+  "Panama",
+  "Papua New Guinea",
+  "Paraguay",
+  "Peru",
+  "Philippines",
+  "Poland",
+  "Portugal",
+  "Qatar",
+  "Romania",
+  "Russia",
+  "Rwanda",
+  "Saint Kitts and Nevis",
+  "Saint Lucia",
+  "Samoa",
+  "San Marino",
+  "Saudi Arabia",
+  "Senegal",
+  "Serbia",
+  "Seychelles",
+  "Sierra Leone",
+  "Singapore",
+  "Slovakia",
+  "Slovenia",
+  "Solomon Islands",
+  "Somalia",
+  "South Africa",
+  "Spain",
+  "Sri Lanka",
+  "Sudan",
+  "Suriname",
+  "Sweden",
+  "Switzerland",
+  "Syria",
+  "Taiwan",
+  "Tajikistan",
+  "Tanzania",
+  "Thailand",
+  "Timor-Leste",
+  "Togo",
+  "Tonga",
+  "Trinidad and Tobago",
+  "Tunisia",
+  "Turkey",
+  "Turkmenistan",
+  "Tuvalu",
+  "Uganda",
+  "Ukraine",
+  "United Arab Emirates",
+  "United Kingdom",
+  "United States",
+  "Uruguay",
+  "Uzbekistan",
+  "Vanuatu",
+  "Vatican City",
+  "Venezuela",
+  "Vietnam",
+  "Yemen",
+  "Zambia",
+  "Zimbabwe",
+];
 
 export default function AuthModal({ isOpen, onClose, initialView = "login" }) {
   const [view, setView] = useState(initialView);
@@ -26,70 +219,108 @@ export default function AuthModal({ isOpen, onClose, initialView = "login" }) {
   const [isEmailSent, setIsEmailSent] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [legalView, setLegalView] = useState(null);
+  const modalRef = useRef(null);
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
+    country: "",
+    userType: "",
   });
 
-  // --- MATH CAPTCHA LOGIC ---
   const [captcha, setCaptcha] = useState({ a: 0, b: 0, userAns: "" });
+
   const generateCaptcha = () => {
     setCaptcha({
-      a: Math.floor(Math.random() * 10) + 1,
-      b: Math.floor(Math.random() * 10) + 1,
+      a: Math.floor(Math.random() * 9) + 1,
+      b: Math.floor(Math.random() * 9) + 1,
       userAns: "",
     });
   };
 
+  const handleOutsideClick = (e) => {
+    if (modalRef.current && !modalRef.current.contains(e.target)) {
+      onClose();
+    }
+  };
+
   useEffect(() => {
     if (isOpen) {
-      // 🚀 Detect submission intent and route to signup
-      if (initialView === "submission") {
-        setView("signup");
-      } else {
-        setView(initialView);
-      }
+      setView(initialView === "submission" ? "signup" : initialView);
       setIsEmailSent(false);
       setLegalView(null);
       setShowPassword(false);
       setAgreed(false);
+      setFormData({
+        name: "",
+        email: "",
+        password: "",
+        country: "",
+        userType: "",
+      });
       generateCaptcha();
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
     }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
   }, [isOpen, initialView]);
+
+  // 🚀 Logic: Auto-assign Local for Bangladesh, International for others
+  const handleCountryChange = (val) => {
+    let type = "";
+    if (val === "Bangladesh") {
+      type = "Local";
+    } else if (val !== "") {
+      type = "International";
+    }
+    setFormData({ ...formData, country: val, userType: type });
+  };
 
   if (!isOpen) return null;
 
   const LegalContent = {
     privacy: {
       title: "Privacy Protocol",
-      icon: ShieldCheck,
       text: "Authors retain 100% intellectual property. Research papers are shielded from third-party AI training bots. Personal data is encrypted via AES-256 standards. On-site check-in logs are purged 72 hours post-event for maximum attendee privacy.",
     },
     terms: {
       title: "Terms of Service",
-      icon: Scale,
       text: "Plagiarism limit is strictly <15%. Registration fees are non-refundable after June 15, 2026. Authors must present their work (physically or virtually) to be included in the final Scopus-indexed proceedings.",
     },
   };
 
+  const handleViewChange = (newView) => {
+    setView(newView);
+    generateCaptcha();
+    setAgreed(false);
+    setShowPassword(false);
+  };
+
   const isCaptchaCorrect = parseInt(captcha.userAns) === captcha.a + captcha.b;
   const isSubmitDisabled =
-    loading || !isCaptchaCorrect || (view === "signup" && !agreed);
+    loading ||
+    !isCaptchaCorrect ||
+    (view === "signup" &&
+      (!agreed || !formData.country || !formData.userType || !formData.name));
 
   const handleGoogleSignIn = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
       const result = await signIn("google", {
         callbackUrl: "/dashboard",
         redirect: false,
       });
-      if (result?.ok) {
-        setCaptcha((prev) => ({ ...prev, userAns: "" }));
+      if (result?.error) toast.error("Google Auth Failed");
+      else if (result?.ok) {
+        toast.success("Login Successful!");
         window.location.href = "/dashboard";
       }
     } catch (error) {
-      toast.error("Google authentication failed.");
+      toast.error("An error occurred with Google Sign-in");
     } finally {
       setLoading(false);
     }
@@ -97,8 +328,6 @@ export default function AuthModal({ isOpen, onClose, initialView = "login" }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const isCaptchaCorrect =
-      parseInt(captcha.userAns) === captcha.a + captcha.b;
     if (!isCaptchaCorrect) {
       toast.error("Mathematical verification failed.");
       generateCaptcha();
@@ -107,70 +336,91 @@ export default function AuthModal({ isOpen, onClose, initialView = "login" }) {
 
     setLoading(true);
     try {
-      if (view === "forgot") {
-        const res = await fetch("/api/auth/forgot-password", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: formData.email }),
-        });
-        if (res.ok) setIsEmailSent(true);
-        else {
-          const data = await res.json();
-          toast.error(data.error || "Failed to send reset link.");
-        }
-      } else if (view === "login") {
+      if (view === "login") {
         const res = await signIn("credentials", {
-          email: formData.email,
+          email: formData.email.toLowerCase().trim(),
           password: formData.password,
           redirect: false,
         });
         if (res?.ok) {
-          toast.success("Login successful!");
+          toast.success("Welcome Back! Login Successful.");
           window.location.href = "/dashboard";
         } else {
-          toast.error(res?.error || "Invalid credentials.");
+          toast.error(res?.error || "Invalid Credentials.");
+          generateCaptcha();
         }
       } else if (view === "signup") {
         const res = await fetch("/api/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
+          body: JSON.stringify({
+            ...formData,
+            email: formData.email.toLowerCase().trim(),
+          }),
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          toast.success("Account Created! You are Registered.");
+          handleViewChange("login");
+        } else if (
+          res.status === 400 &&
+          data.error === "Email already in use"
+        ) {
+          toast.error("You are already Registered. Please Login.");
+          setTimeout(() => handleViewChange("login"), 1500);
+        } else {
+          toast.error(data.error || "Registration Failed.");
+          generateCaptcha();
+        }
+      } else if (view === "forgot") {
+        const res = await fetch("/api/auth/forgot-password", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: formData.email }),
         });
         if (res.ok) {
-          toast.success("Registration successful! Please login.");
-          setView("login");
+          setIsEmailSent(true);
+          toast.success("Recovery link sent!");
         } else {
-          const data = await res.json();
-          toast.error(data.error || "Registration failed.");
+          toast.error("User not found.");
         }
       }
     } catch (error) {
-      toast.error("A connection error occurred.");
+      // 🚀 This catches the "Connection Error" if the API endpoint doesn't exist or crashes
+      toast.error("Server connection error. Please try again later.");
+      generateCaptcha();
     } finally {
       setLoading(false);
-      setCaptcha((prev) => ({ ...prev, userAns: "" }));
     }
   };
 
   return (
-    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm overflow-hidden">
+    <div
+      onMouseDown={handleOutsideClick}
+      className="fixed inset-0 z-[150] flex items-center justify-center p-2 md:p-4 bg-black/70 backdrop-blur-sm transition-all duration-300"
+    >
       <div
-        className={`bg-white w-full transition-all duration-500 ease-in-out ${view === "signup" ? "max-w-[950px]" : "max-w-[450px]"} rounded-[2rem] shadow-2xl overflow-hidden relative flex flex-col animate-in fade-in zoom-in duration-300 max-h-[95vh] my-auto`}
+        ref={modalRef}
+        onMouseDown={(e) => e.stopPropagation()}
+        className={`bg-white w-full transition-all duration-500 ease-in-out ${view === "signup" ? "max-w-[1000px]" : "max-w-[450px]"} rounded-[2rem] shadow-2xl overflow-hidden relative flex flex-col animate-in fade-in zoom-in max-h-[98vh] md:max-h-[92vh] my-auto`}
       >
-        <div className="w-full bg-[#003366] p-4 flex items-center justify-between border-b border-white/10 shrink-0">
+        {/* Header */}
+        <div className="w-full bg-[#003366] p-4 flex items-center justify-between border-b border-white/10 shrink-0 relative z-[20]">
           <div className="flex items-center gap-3">
             <div className="bg-white/10 p-1.5 rounded-lg backdrop-blur-sm">
               <img
                 src="/images/logo.png"
-                alt="EWU Logo"
-                className="h-10 w-auto object-contain"
+                alt="Logo"
+                className="h-8 md:h-10 w-auto object-contain"
               />
             </div>
             <div className="flex flex-col">
-              <h2 className="text-white font-black text-lg leading-none tracking-tight uppercase">
-                CONFERENCE <span className="text-[#C5A059]">DBA</span>
+              <h2 className="text-white font-black text-sm md:text-lg leading-none tracking-tight uppercase">
+                DBA <span className="text-[#C5A059]">CONFERENCE</span>
               </h2>
-              <span className="text-white/60 text-[10px] tracking-[0.15em] mt-1 font-medium uppercase">
+              <span className="text-white/60 text-[8px] md:text-[10px] tracking-[0.15em] mt-1 font-medium uppercase">
                 INTERNATIONAL 2026
               </span>
             </div>
@@ -183,7 +433,8 @@ export default function AuthModal({ isOpen, onClose, initialView = "login" }) {
           </button>
         </div>
 
-        <div className="flex flex-col md:flex-row flex-grow overflow-y-auto custom-scrollbar relative">
+        <div className="flex flex-col md:flex-row flex-grow relative min-h-0 overflow-hidden">
+          {/* Legal View Overlay */}
           {legalView && (
             <div className="absolute inset-0 z-[120] bg-[#003366] text-white p-8 md:p-16 animate-in slide-in-from-bottom duration-500 flex flex-col justify-center overflow-y-auto">
               <button
@@ -193,13 +444,13 @@ export default function AuthModal({ isOpen, onClose, initialView = "login" }) {
                 <ChevronLeft size={16} /> Back
               </button>
               <div className="max-w-xl mx-auto md:mx-0 mt-12 md:mt-0 text-center md:text-left">
-                <h3 className="text-2xl md:text-3xl font-black tracking-tight mb-4 uppercase">
+                <h3 className="text-2xl md:text-4xl font-black tracking-tight mb-4 uppercase">
                   {LegalContent[legalView].title} 2026
                 </h3>
                 <p className="text-slate-300 leading-relaxed text-sm md:text-base font-medium">
                   {LegalContent[legalView].text}
                 </p>
-                <div className="mt-8 md:mt-10 flex flex-col sm:flex-row items-center gap-4 md:gap-6">
+                <div className="mt-10 flex flex-col sm:flex-row items-center gap-6">
                   <button
                     onClick={() => {
                       setAgreed(true);
@@ -221,143 +472,195 @@ export default function AuthModal({ isOpen, onClose, initialView = "login" }) {
             </div>
           )}
 
-          {view === "signup" && (
-            <div className="hidden md:flex md:w-5/12 bg-[#003366]/95 p-12 text-white flex flex-col justify-center border-r border-white/5 shrink-0 animate-in slide-in-from-left duration-500">
-              <h2 className="text-2xl font-black uppercase tracking-tight mb-8">
-                Researcher Portal
-              </h2>
-              <ul className="space-y-5">
-                {[
-                  "Secure Abstract Submission",
-                  "Real Time Peer Review Tracking",
-                  "Digital Certification",
-                  "Early Bird Registration",
-                ].map((item) => (
-                  <li
-                    key={item}
-                    className="flex items-center gap-3 text-sm font-black uppercase tracking-tight"
-                  >
-                    <CheckCircle2 className="text-[#C5A059] w-5 h-5 shrink-0" />{" "}
-                    {item}
-                  </li>
-                ))}
-              </ul>
-              <p className="text-[10px] text-white/40 italic font-black mt-auto uppercase tracking-widest">
-                © Conference DBA 2026
-              </p>
-            </div>
-          )}
-
+          {/* Left Sidebar */}
           <div
-            className={`${view === "signup" ? "md:w-7/12" : "w-full"} p-8 md:p-12 bg-white flex flex-col justify-center`}
+            className={`hidden md:flex bg-[#003366]/95 text-white flex-col justify-center border-r border-white/5 shrink-0 transition-all duration-500 ${view === "signup" ? "w-5/12 p-10 opacity-100" : "w-0 p-0 opacity-0 overflow-hidden"}`}
+          >
+            <h2 className="text-xl font-black uppercase tracking-tight mb-6 whitespace-nowrap">
+              Researcher Portal
+            </h2>
+            <ul className="space-y-4 whitespace-nowrap">
+              {[
+                "Secure Abstract Submission",
+                "Real Time Peer Review Tracking",
+                "Digital Certification",
+                "Early Bird Registration",
+              ].map((item) => (
+                <li
+                  key={item}
+                  className="flex items-center gap-3 text-xs font-black uppercase tracking-tight"
+                >
+                  <CheckCircle2 className="text-[#C5A059] w-4 h-4 shrink-0" />{" "}
+                  {item}
+                </li>
+              ))}
+            </ul>
+            <p className="text-[9px] text-white/40 italic font-black mt-12 uppercase tracking-widest">
+              © CONFERENCE 2026
+            </p>
+          </div>
+
+          {/* Form Content */}
+          <div
+            className={`${view === "signup" ? "md:w-7/12" : "w-full"} p-6 md:p-10 bg-white flex flex-col justify-center transition-all duration-500 overflow-y-auto no-scrollbar`}
           >
             {isEmailSent ? (
-              <div className="flex flex-col items-center justify-center py-12 px-6 text-center animate-in fade-in zoom-in duration-500 min-h-[400px] bg-[#003366] rounded-[2rem]">
+              <div className="flex flex-col items-center justify-center py-12 px-6 text-center animate-in fade-in zoom-in duration-500 min-h-[400px] bg-[#003366] rounded-[2rem] text-white shadow-2xl">
                 <div className="relative w-20 h-20 mb-8">
                   <div className="absolute inset-0 bg-[#C5A059]/20 rounded-full animate-ping"></div>
                   <div className="relative w-20 h-20 bg-[#C5A059]/10 border-2 border-[#C5A059] rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(197,160,89,0.3)]">
                     <CheckCircle2 size={40} className="text-[#C5A059]" />
                   </div>
                 </div>
-                <h3 className="text-3xl font-black text-white uppercase tracking-[0.1em] mb-4">
+                <h3 className="text-3xl font-black uppercase tracking-[0.1em] mb-4">
                   SENT!
                 </h3>
                 <p className="text-slate-300 text-base font-medium leading-relaxed max-w-[280px] mx-auto mb-10">
-                  Your request has been received. A recovery email has been sent
-                  to your inbox.
+                  {" "}
+                  Recovery email sent to your inbox.
                 </p>
                 <button
                   onClick={() => {
                     setIsEmailSent(false);
-                    setView("login");
-                    generateCaptcha();
+                    handleViewChange("login");
                   }}
-                  className="text-[#C5A059] font-black text-xs uppercase tracking-[0.2em] hover:text-white transition-all underline underline-offset-8 decoration-1"
+                  className="text-[#C5A059] font-black text-xs uppercase underline"
                 >
                   Back to Login
                 </button>
               </div>
             ) : (
               <>
-                <div className="mb-6 text-center md:text-left">
+                <div className="mb-5 text-center md:text-left">
                   {view === "forgot" && (
                     <button
-                      onClick={() => setView("login")}
-                      className="flex items-center gap-1 text-[10px] font-black text-[#C5A059] mb-4 hover:text-[#003366] transition-colors uppercase tracking-widest"
+                      onClick={() => handleViewChange("login")}
+                      className="flex items-center gap-1 text-[10px] font-black text-[#C5A059] mb-3 uppercase hover:translate-x-[-2px] transition-transform"
                     >
                       <ChevronLeft size={14} /> Back to Login
                     </button>
                   )}
-                  <h3 className="text-xl md:text-2xl font-black text-[#003366] uppercase tracking-tighter leading-none">
-                    {initialView === "submission"
-                      ? "Welcome Researcher"
-                      : view === "login"
-                        ? "Researcher Login"
-                        : view === "signup"
-                          ? "Create Account"
-                          : "Recover Password"}
+                  <h3 className="text-lg md:text-2xl font-black text-[#003366] uppercase tracking-tighter leading-none">
+                    {view === "login"
+                      ? "Researcher Login"
+                      : view === "signup"
+                        ? "Create Account"
+                        : "Recover Password"}
                   </h3>
-                  <p className="text-slate-500 text-xs font-medium mt-1 uppercase italic">
-                    {initialView === "submission"
-                      ? "Register to begin your submission"
-                      : view === "login"
-                        ? "Access your dashboard"
-                        : view === "signup"
-                          ? "Register for Conference DBA 2026"
-                          : "Reset your link"}
+                  <p className="text-slate-500 text-[10px] font-medium mt-1 uppercase italic">
+                    {view === "login"
+                      ? "Access your dashboard"
+                      : "Register for DBA Conference 2026"}
                   </p>
                 </div>
 
                 {view !== "forgot" && (
                   <button
                     onClick={handleGoogleSignIn}
-                    disabled={loading || !isCaptchaCorrect}
-                    className="w-full flex items-center justify-center gap-3 py-3 border border-slate-200 rounded-xl hover:bg-slate-50 transition-all font-black text-[10px] uppercase tracking-widest text-slate-700 mb-6 disabled:opacity-40 disabled:cursor-not-allowed"
+                    disabled={loading}
+                    className="w-full flex items-center justify-center gap-3 py-2.5 border border-slate-200 rounded-xl hover:bg-slate-50 transition-all font-black text-[9px] uppercase tracking-widest text-slate-700 mb-4 disabled:opacity-40"
                   >
-                    <img
-                      src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-                      className="w-4 h-4"
-                      alt="G"
-                    />
-                    Continue with Google
+                    {loading ? (
+                      <Loader2 className="animate-spin" size={16} />
+                    ) : (
+                      <>
+                        <img
+                          src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+                          className="w-4 h-4"
+                          alt="G"
+                        />{" "}
+                        Continue with Google
+                      </>
+                    )}
                   </button>
                 )}
 
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-3">
                   {view === "signup" && (
-                    <div className="relative group">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#C5A059] w-5 h-5" />
-                      <input
-                        type="text"
-                        required
-                        placeholder="Full Name"
-                        className="w-full pl-11 pr-4 py-3 border border-slate-200 rounded-xl focus:ring-1 focus:ring-[#C5A059] outline-none text-xs font-bold text-[#003366]"
-                        onChange={(e) =>
-                          setFormData({ ...formData, name: e.target.value })
-                        }
-                      />
-                    </div>
+                    <>
+                      <div className="relative group">
+                        <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#C5A059] w-4 h-4" />
+                        <input
+                          type="text"
+                          required
+                          placeholder="Full Name"
+                          className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-xl focus:ring-1 focus:ring-[#C5A059] outline-none text-[11px] font-bold text-[#003366]"
+                          value={formData.name}
+                          onChange={(e) =>
+                            setFormData({ ...formData, name: e.target.value })
+                          }
+                        />
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="relative group">
+                          <Globe className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#C5A059] w-4 h-4" />
+                          <input
+                            list="country-list"
+                            required
+                            placeholder="Select Country"
+                            className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-xl focus:ring-1 focus:ring-[#C5A059] outline-none text-[11px] font-bold text-[#003366]"
+                            value={formData.country}
+                            onChange={(e) =>
+                              handleCountryChange(e.target.value)
+                            }
+                          />
+                          <datalist id="country-list">
+                            {countries.map((c) => (
+                              <option key={c} value={c} />
+                            ))}
+                          </datalist>
+                        </div>
+                        <div className="relative group">
+                          <Users className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#C5A059] w-4 h-4" />
+                          <select
+                            required
+                            className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-xl focus:ring-1 focus:ring-[#C5A059] outline-none text-[11px] font-bold text-[#003366] bg-white appearance-none"
+                            value={formData.userType}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                userType: e.target.value,
+                              })
+                            }
+                          >
+                            <option value="">User Type</option>
+                            <option value="International">International</option>
+                            <option value="Local">Local</option>
+                            <option value="Local (Student)">
+                              Local (Student)
+                            </option>
+                            <option value="Listener Only">
+                              Listener Only (Without Paper)
+                            </option>
+                          </select>
+                        </div>
+                      </div>
+                    </>
                   )}
+
                   <div className="relative group">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#C5A059] w-5 h-5" />
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#C5A059] w-4 h-4" />
                     <input
                       type="email"
                       required
                       placeholder="Email Address"
-                      className="w-full pl-11 pr-4 py-3 border border-slate-200 rounded-xl focus:ring-1 focus:ring-[#C5A059] outline-none text-xs font-bold text-[#003366]"
+                      className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-xl focus:ring-1 focus:ring-[#C5A059] outline-none text-[11px] font-bold text-[#003366]"
+                      value={formData.email}
                       onChange={(e) =>
                         setFormData({ ...formData, email: e.target.value })
                       }
                     />
                   </div>
+
                   {view !== "forgot" && (
                     <div className="relative group">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#C5A059] w-5 h-5" />
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#C5A059] w-4 h-4" />
                       <input
                         type={showPassword ? "text" : "password"}
                         required
                         placeholder="Password"
-                        className="w-full pl-11 pr-12 py-3 border border-slate-200 rounded-xl focus:ring-1 focus:ring-[#C5A059] outline-none text-xs font-bold text-[#003366]"
+                        className="w-full pl-10 pr-10 py-2 border border-slate-200 rounded-xl focus:ring-1 focus:ring-[#C5A059] outline-none text-[11px] font-bold text-[#003366]"
+                        value={formData.password}
                         onChange={(e) =>
                           setFormData({ ...formData, password: e.target.value })
                         }
@@ -365,28 +668,30 @@ export default function AuthModal({ isOpen, onClose, initialView = "login" }) {
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#003366] transition-colors p-1"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 p-1"
                       >
                         {showPassword ? (
-                          <EyeOff size={18} />
+                          <EyeOff size={16} />
                         ) : (
-                          <Eye size={18} />
+                          <Eye size={16} />
                         )}
                       </button>
                     </div>
                   )}
+
                   {view === "login" && (
                     <button
                       type="button"
-                      onClick={() => setView("forgot")}
-                      className="text-[10px] font-black text-[#C5A059] hover:text-[#003366] uppercase tracking-widest w-full text-right"
+                      onClick={() => handleViewChange("forgot")}
+                      className="text-[9px] font-black text-[#C5A059] hover:text-[#003366] uppercase w-full text-right transition-colors"
                     >
                       Forgot Password?
                     </button>
                   )}
-                  <div className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-xl">
-                    <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-lg border border-slate-100 shadow-sm shrink-0">
-                      <span className="text-sm font-black text-[#003366] tracking-widest">
+
+                  <div className="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-xl">
+                    <div className="bg-white px-3 py-2 rounded-lg border border-slate-100 shrink-0">
+                      <span className="text-xs font-black text-[#003366]">
                         {captcha.a} + {captcha.b} =
                       </span>
                     </div>
@@ -398,69 +703,70 @@ export default function AuthModal({ isOpen, onClose, initialView = "login" }) {
                       onChange={(e) =>
                         setCaptcha({ ...captcha, userAns: e.target.value })
                       }
-                      className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-1 focus:ring-[#C5A059] outline-none text-sm font-bold text-center no-spinner"
+                      className="w-full px-2 py-2 border border-slate-200 rounded-lg text-xs font-bold text-center outline-none focus:ring-1 focus:ring-[#C5A059]"
                     />
                     <button
                       type="button"
                       onClick={generateCaptcha}
-                      className="p-2 text-slate-400 hover:text-[#C5A059] transition-colors"
+                      className="p-1.5 text-slate-400 hover:rotate-180 transition-transform duration-500"
                     >
-                      <RotateCcw size={16} />
+                      <RotateCcw size={14} />
                     </button>
                   </div>
+
                   {view === "signup" && (
-                    <div className="flex items-center gap-3 px-1">
+                    <div className="flex items-center gap-2 px-1">
                       <input
                         type="checkbox"
-                        id="terms"
+                        id="terms-agree"
                         checked={agreed}
                         onChange={(e) => setAgreed(e.target.checked)}
-                        className="accent-[#003366] cursor-pointer w-4 h-4 shrink-0"
+                        className="accent-[#003366] w-3.5 h-3.5 cursor-pointer"
                       />
                       <label
-                        htmlFor="terms"
-                        className="text-[10px] text-slate-500 font-bold uppercase tracking-tight cursor-pointer leading-none"
+                        htmlFor="terms-agree"
+                        className="text-[10px] text-slate-600 font-bold uppercase tracking-tight cursor-pointer leading-none"
                       >
                         I agree to the{" "}
                         <button
                           type="button"
                           onClick={() => setLegalView("terms")}
-                          className="text-[#003366] font-black uppercase"
+                          className="text-[#003366] font-black"
                         >
-                          Terms of Service
+                          Terms
                         </button>{" "}
                         &{" "}
                         <button
                           type="button"
                           onClick={() => setLegalView("privacy")}
-                          className="text-[#003366] font-black uppercase"
+                          className="text-[#003366] font-black"
                         >
-                          Privacy Protocol
+                          Privacy
                         </button>
                       </label>
                     </div>
                   )}
+
                   <button
                     disabled={isSubmitDisabled}
-                    className={`w-full py-4 rounded-xl font-black shadow-xl transition-all flex items-center justify-center gap-2 active:scale-95 text-sm uppercase tracking-widest disabled:opacity-40 disabled:cursor-not-allowed ${view === "signup" ? "bg-[#C5A059] text-[#003366]" : "bg-[#003366] text-white"}`}
+                    className={`w-full py-3.5 rounded-xl font-black shadow-xl transition-all text-xs uppercase tracking-widest active:scale-95 disabled:opacity-40 ${view === "signup" ? "bg-[#C5A059] text-[#003366] disabled:bg-[#e6d5b8]" : "bg-[#003366] text-white disabled:bg-[#003366]/40"}`}
                   >
                     {loading ? (
-                      <Loader2 className="animate-spin mx-auto" size={18} />
+                      <Loader2 className="animate-spin mx-auto" size={16} />
                     ) : view === "login" ? (
                       "Login"
-                    ) : view === "signup" ? (
-                      "Register"
                     ) : (
-                      "Send Link"
+                      "Register"
                     )}
                   </button>
                 </form>
-                <div className="mt-8 text-center">
+
+                <div className="mt-5 text-center pb-2">
                   <button
                     onClick={() =>
-                      setView(view === "login" ? "signup" : "login")
+                      handleViewChange(view === "login" ? "signup" : "login")
                     }
-                    className="text-[11px] font-black text-[#C5A059] uppercase tracking-widest hover:text-[#003366]"
+                    className="text-[10px] font-black text-[#C5A059] uppercase hover:text-[#003366] transition-colors"
                   >
                     {view === "login"
                       ? "New researcher? Create Account"
@@ -472,6 +778,16 @@ export default function AuthModal({ isOpen, onClose, initialView = "login" }) {
           </div>
         </div>
       </div>
+
+      <style jsx>{`
+        .no-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .no-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
     </div>
   );
 }
