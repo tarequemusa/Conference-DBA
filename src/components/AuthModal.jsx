@@ -269,15 +269,20 @@ export default function AuthModal({ isOpen, onClose, initialView = "login" }) {
     };
   }, [isOpen, initialView]);
 
-  // 🚀 Logic: Auto-assign Local for Bangladesh, International for others
+  // 🚀 Logic: Dynamic User Type based on country selection
   const handleCountryChange = (val) => {
     let type = "";
     if (val === "Bangladesh") {
       type = "Local";
-    } else if (val !== "") {
+    } else if (val !== "" && val !== "Bangladesh") {
       type = "International";
     }
     setFormData({ ...formData, country: val, userType: type });
+  };
+
+  // 🚀 Logic: Password Validation (Min 8 chars, 1 uppercase, 1 number)
+  const isPasswordValid = (pw) => {
+    return pw.length >= 8 && /[A-Z]/.test(pw) && /[0-9]/.test(pw);
   };
 
   if (!isOpen) return null;
@@ -305,7 +310,11 @@ export default function AuthModal({ isOpen, onClose, initialView = "login" }) {
     loading ||
     !isCaptchaCorrect ||
     (view === "signup" &&
-      (!agreed || !formData.country || !formData.userType || !formData.name));
+      (!agreed ||
+        !formData.country ||
+        !formData.userType ||
+        !formData.name ||
+        !isPasswordValid(formData.password)));
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
@@ -363,6 +372,17 @@ export default function AuthModal({ isOpen, onClose, initialView = "login" }) {
 
         if (res.ok) {
           toast.success("Account Created! You are Registered.");
+
+          // 🚀 Trigger Welcome/Registration Confirmation Email
+          await fetch("/api/auth/send-welcome", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: formData.email,
+              name: formData.name,
+            }),
+          });
+
           handleViewChange("login");
         } else if (
           res.status === 400 &&
@@ -388,7 +408,6 @@ export default function AuthModal({ isOpen, onClose, initialView = "login" }) {
         }
       }
     } catch (error) {
-      // 🚀 This catches the "Connection Error" if the API endpoint doesn't exist or crashes
       toast.error("Server connection error. Please try again later.");
       generateCaptcha();
     } finally {
@@ -406,7 +425,7 @@ export default function AuthModal({ isOpen, onClose, initialView = "login" }) {
         onMouseDown={(e) => e.stopPropagation()}
         className={`bg-white w-full transition-all duration-500 ease-in-out ${view === "signup" ? "max-w-[1000px]" : "max-w-[450px]"} rounded-[2rem] shadow-2xl overflow-hidden relative flex flex-col animate-in fade-in zoom-in max-h-[98vh] md:max-h-[92vh] my-auto`}
       >
-        {/* Header */}
+        {/* Header (UI preserved) */}
         <div className="w-full bg-[#003366] p-4 flex items-center justify-between border-b border-white/10 shrink-0 relative z-[20]">
           <div className="flex items-center gap-3">
             <div className="bg-white/10 p-1.5 rounded-lg backdrop-blur-sm">
@@ -434,7 +453,7 @@ export default function AuthModal({ isOpen, onClose, initialView = "login" }) {
         </div>
 
         <div className="flex flex-col md:flex-row flex-grow relative min-h-0 overflow-hidden">
-          {/* Legal View Overlay */}
+          {/* Legal View Overlay (UI preserved) */}
           {legalView && (
             <div className="absolute inset-0 z-[120] bg-[#003366] text-white p-8 md:p-16 animate-in slide-in-from-bottom duration-500 flex flex-col justify-center overflow-y-auto">
               <button
@@ -472,7 +491,7 @@ export default function AuthModal({ isOpen, onClose, initialView = "login" }) {
             </div>
           )}
 
-          {/* Left Sidebar */}
+          {/* Left Sidebar (UI preserved) */}
           <div
             className={`hidden md:flex bg-[#003366]/95 text-white flex-col justify-center border-r border-white/5 shrink-0 transition-all duration-500 ${view === "signup" ? "w-5/12 p-10 opacity-100" : "w-0 p-0 opacity-0 overflow-hidden"}`}
           >
@@ -500,7 +519,6 @@ export default function AuthModal({ isOpen, onClose, initialView = "login" }) {
             </p>
           </div>
 
-          {/* Form Content */}
           <div
             className={`${view === "signup" ? "md:w-7/12" : "w-full"} p-6 md:p-10 bg-white flex flex-col justify-center transition-all duration-500 overflow-y-auto no-scrollbar`}
           >
@@ -516,7 +534,6 @@ export default function AuthModal({ isOpen, onClose, initialView = "login" }) {
                   SENT!
                 </h3>
                 <p className="text-slate-300 text-base font-medium leading-relaxed max-w-[280px] mx-auto mb-10">
-                  {" "}
                   Recovery email sent to your inbox.
                 </p>
                 <button
@@ -624,14 +641,22 @@ export default function AuthModal({ isOpen, onClose, initialView = "login" }) {
                             }
                           >
                             <option value="">User Type</option>
-                            <option value="International">International</option>
-                            <option value="Local">Local</option>
-                            <option value="Local (Student)">
-                              Local (Student)
-                            </option>
-                            <option value="Listener Only">
-                              Listener Only (Without Paper)
-                            </option>
+                            {/* 🚀 Dynamic User Type Logic */}
+                            {formData.country === "Bangladesh" ? (
+                              <>
+                                <option value="Local">Local</option>
+                                <option value="Local (Student)">
+                                  Local (Student)
+                                </option>
+                                <option value="Listener Only">
+                                  Listener Only (Without Paper)
+                                </option>
+                              </>
+                            ) : (
+                              <option value="International">
+                                International
+                              </option>
+                            )}
                           </select>
                         </div>
                       </div>
@@ -653,29 +678,42 @@ export default function AuthModal({ isOpen, onClose, initialView = "login" }) {
                   </div>
 
                   {view !== "forgot" && (
-                    <div className="relative group">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#C5A059] w-4 h-4" />
-                      <input
-                        type={showPassword ? "text" : "password"}
-                        required
-                        placeholder="Password"
-                        className="w-full pl-10 pr-10 py-2 border border-slate-200 rounded-xl focus:ring-1 focus:ring-[#C5A059] outline-none text-[11px] font-bold text-[#003366]"
-                        value={formData.password}
-                        onChange={(e) =>
-                          setFormData({ ...formData, password: e.target.value })
-                        }
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 p-1"
-                      >
-                        {showPassword ? (
-                          <EyeOff size={16} />
-                        ) : (
-                          <Eye size={16} />
-                        )}
-                      </button>
+                    <div className="flex flex-col gap-1">
+                      <div className="relative group">
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#C5A059] w-4 h-4" />
+                        <input
+                          type={showPassword ? "text" : "password"}
+                          required
+                          placeholder="Password"
+                          className="w-full pl-10 pr-10 py-2 border border-slate-200 rounded-xl focus:ring-1 focus:ring-[#C5A059] outline-none text-[11px] font-bold text-[#003366]"
+                          value={formData.password}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              password: e.target.value,
+                            })
+                          }
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 p-1"
+                        >
+                          {showPassword ? (
+                            <EyeOff size={16} />
+                          ) : (
+                            <Eye size={16} />
+                          )}
+                        </button>
+                      </div>
+                      {/* 🚀 Password Hint */}
+                      {view === "signup" && (
+                        <p
+                          className={`text-[8px] font-bold px-1 transition-colors ${formData.password && !isPasswordValid(formData.password) ? "text-red-500" : "text-slate-400"}`}
+                        >
+                          Hint: Min 8 chars, 1 Uppercase, 1 Number.
+                        </p>
+                      )}
                     </div>
                   )}
 
@@ -778,7 +816,6 @@ export default function AuthModal({ isOpen, onClose, initialView = "login" }) {
           </div>
         </div>
       </div>
-
       <style jsx>{`
         .no-scrollbar::-webkit-scrollbar {
           display: none;

@@ -8,7 +8,7 @@ export const metadata = {
   description: "International Conference on Building Resilient Supply Chains",
   icons: {
     icon: "/favicon.ico",
-    shortcut: "/favicon-32x32.png",
+    shortcut: "/favicon.ico",
     apple: "/apple-touch-icon.png",
   },
 };

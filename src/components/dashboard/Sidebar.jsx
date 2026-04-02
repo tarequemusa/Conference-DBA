@@ -2,11 +2,10 @@
 import {
   Award,
   BarChart3,
-  Calendar, // 🚀 NEW ICON
+  Calendar,
   CheckCircle,
   ClipboardCheck,
   CreditCard,
-  FileText,
   History,
   Landmark,
   LayoutDashboard,
@@ -35,15 +34,24 @@ export default function Sidebar() {
   }, [pathname]);
 
   const userRole = session?.user?.role;
+  const userType = session?.user?.userType;
+
   const isAdmin = userRole === "ADMIN";
   const isReviewer = userRole === "REVIEWER";
   const isAuthority = userRole === "AUTHORITY";
 
+  const getPortalLabel = () => {
+    if (isAdmin) return "Admin Portal";
+    if (isAuthority) return "Authority Portal";
+    if (isReviewer) return "Reviewer Portal";
+    return "Researcher Portal";
+  };
+
   const researcherItems = [
     { name: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
     { name: "Submit Abstract", icon: PlusCircle, path: "/dashboard/submit" },
-    { name: "My Abstracts", icon: FileText, path: "/dashboard/abstracts" },
-    { name: "Event Timeline", icon: Calendar, path: "/dashboard/schedule" }, // 🚀 INTEGRATED
+    // 🚀 Logic: "My Abstracts" merged into Dashboard, removed from Sidebar
+    { name: "Event Timeline", icon: Calendar, path: "/dashboard/schedule" },
     { name: "Certificates", icon: Award, path: "/dashboard/certificates" },
   ];
 
@@ -64,7 +72,7 @@ export default function Sidebar() {
   const adminItems = [
     { name: "Admin Console", icon: ShieldCheck, path: "/admin" },
     { name: "Manage Abstracts", icon: BarChart3, path: "/admin/abstracts" },
-    { name: "Event Schedule", icon: Calendar, path: "/admin/schedule" }, // 🚀 UPDATED: Pointing to Architect
+    { name: "Event Schedule", icon: Calendar, path: "/admin/schedule" },
     { name: "Finance & Revenue", icon: CreditCard, path: "/admin/finance" },
     { name: "User Management", icon: Users, path: "/admin/users" },
     { name: "Activity Logs", icon: History, path: "/admin/logs" },
@@ -75,49 +83,52 @@ export default function Sidebar() {
     { name: "Event Stats", icon: BarChart3, path: "/authority/stats" },
   ];
 
-  const getMenuItems = () => {
-    if (isAdmin) {
-      return [
+  const menuItems = isAdmin
+    ? [
         ...adminItems,
         { name: "Profile", icon: UserCircle, path: "/dashboard/profile" },
         { name: "Settings", icon: Settings, path: "/admin/settings" },
-      ];
-    }
-    const commonForOthers = [
-      { name: "Profile", icon: UserCircle, path: "/dashboard/profile" },
-    ];
-    if (isReviewer) return [...reviewerItems, ...commonForOthers];
-    if (isAuthority) return [...authorityItems, ...commonForOthers];
-    return [...researcherItems, ...commonForOthers];
-  };
-
-  const menuItems = getMenuItems();
+      ]
+    : isReviewer
+      ? [
+          ...reviewerItems,
+          { name: "Profile", icon: UserCircle, path: "/dashboard/profile" },
+        ]
+      : isAuthority
+        ? [
+            ...authorityItems,
+            { name: "Profile", icon: UserCircle, path: "/dashboard/profile" },
+          ]
+        : [
+            ...researcherItems,
+            { name: "Profile", icon: UserCircle, path: "/dashboard/profile" },
+          ];
 
   return (
     <>
       {/* Mobile Trigger Header */}
-      <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-[#003366] flex items-center justify-between px-6 z-[60] shadow-md border-b border-white/5">
-        <div className="flex items-center gap-3">
+      <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-[#001f3d] flex items-center justify-between px-6 z-[60] border-b border-white/5">
+        <div className="flex items-center gap-2">
           <Image
             src="/images/logo.png"
             alt="Logo"
-            width={30}
-            height={30}
+            width={22}
+            height={22}
             className="object-contain"
           />
-          <h2 className="text-sm font-black text-white uppercase tracking-tighter">
-            Conference <span className="text-[#C5A059]">DBA</span>
+          <h2 className="text-xs font-black text-white uppercase tracking-tighter">
+            DBA <span className="text-[#C5A059]">Conference</span>
           </h2>
         </div>
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="p-2 text-white hover:bg-white/10 rounded-lg transition-colors"
+          className="p-2 text-white/70 hover:text-white transition-colors"
         >
-          {isOpen ? <X size={24} /> : <Menu size={24} />}
+          {isOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
       </div>
 
-      {/* Backdrop for Mobile */}
+      {/* Mobile Backdrop */}
       {isOpen && (
         <div
           className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[70] md:hidden"
@@ -127,58 +138,53 @@ export default function Sidebar() {
 
       {/* Sidebar Container */}
       <aside
-        className={`fixed md:sticky top-0 left-0 z-[80] flex flex-col w-72 bg-[#003366] text-white h-screen p-6 shadow-2xl transition-transform duration-300 ease-in-out ${
-          isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
-        }`}
+        className={`fixed md:sticky top-0 left-0 z-[80] flex flex-col w-64 bg-[#003366] text-white h-screen transition-transform duration-300 ease-in-out ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}
       >
-        {/* BRANDED HEADER */}
-        <div className="mb-10 flex flex-col items-center text-center animate-in fade-in duration-500">
-          <div className="relative w-16 h-16 mb-4 p-2 bg-white/10 rounded-2xl border border-white/10 shadow-xl">
+        {/* HEADER SECTION */}
+        <div className="p-6 bg-[#00284d] border-b border-white/5 text-center flex flex-col items-center">
+          <div className="relative w-12 h-12 mb-4 p-1.5 bg-white/5 rounded-xl border border-white/10 shadow-lg">
             <Image
               src="/images/logo.png"
               alt="Logo"
               fill
-              sizes="64px"
-              className="object-contain p-2"
+              sizes="48px"
+              className="object-contain p-1.5"
               priority
             />
           </div>
-          <h2 className="text-xl font-black uppercase tracking-tighter leading-none text-white">
-            CONFERENCE <span className="text-[#C5A059]">DBA</span>
+          <h2 className="text-base font-black uppercase tracking-tighter leading-none text-white">
+            DBA <span className="text-[#C5A059]">CONFERENCE</span>
           </h2>
-          <p className="text-[10px] text-white/40 font-bold uppercase tracking-[0.2em] mt-2">
+          <p className="text-[8px] text-white/40 font-bold uppercase tracking-[0.2em] mt-1.5">
             INTERNATIONAL 2026
           </p>
-          <div className="mt-4 px-4 py-1 bg-[#C5A059]/10 border border-[#C5A059]/20 rounded-full">
-            <span className="text-[9px] text-[#C5A059] font-black uppercase tracking-widest">
-              {isAdmin
-                ? "Admin"
-                : isReviewer
-                  ? "Reviewer"
-                  : isAuthority
-                    ? "Authority"
-                    : "Researcher"}{" "}
-              Portal
-            </span>
+
+          {/* PORTAL INDICATOR */}
+          <div className="mt-5 flex items-center justify-center gap-0 w-full max-w-[180px]">
+            <div className="w-full py-1.5 border border-[#C5A059]/40 rounded-full bg-transparent flex items-center justify-center">
+              <span className="text-[8px] text-[#C5A059] font-black uppercase tracking-widest leading-none">
+                {getPortalLabel()}
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Navigation Items */}
-        <nav className="flex-1 space-y-2 overflow-y-auto custom-scrollbar">
+        {/* NAVIGATION BODY */}
+        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto no-scrollbar bg-[#003366]">
           {menuItems.map((item) => {
             const isActive = pathname === item.path;
             return (
               <Link
                 key={item.name}
                 href={item.path}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold text-xs uppercase tracking-wider group ${
+                className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all font-bold text-[10px] uppercase tracking-wider group ${
                   isActive
-                    ? "bg-[#C5A059] text-[#003366] shadow-lg"
+                    ? "bg-[#C5A059] text-[#003366] shadow-md scale-[1.02]"
                     : "text-slate-300 hover:bg-white/5 hover:text-white"
                 }`}
               >
                 <item.icon
-                  size={18}
+                  size={16}
                   className={
                     isActive
                       ? "text-[#003366]"
@@ -191,42 +197,43 @@ export default function Sidebar() {
           })}
         </nav>
 
-        {/* User Profile & Logout Section */}
-        <div className="pt-6 border-t border-white/10 mt-auto">
-          <div className="flex items-center gap-3 px-2 mb-6 text-left">
-            {session?.user?.image ? (
-              <div className="relative w-10 h-10 shrink-0">
+        {/* FOOTER SECTION */}
+        <div className="p-5 bg-[#001f3d] border-t border-white/5">
+          <div className="flex items-center gap-3 mb-5 px-1">
+            <div className="relative w-11 h-11 shrink-0">
+              {session?.user?.image ? (
                 <Image
                   src={session.user.image}
                   alt="Profile"
                   fill
-                  sizes="40px"
-                  className="rounded-full border-2 border-[#C5A059] object-cover shadow-lg"
-                  priority
+                  sizes="44px"
+                  className="rounded-full border-2 border-[#C5A059] object-cover"
                 />
-              </div>
-            ) : (
-              <div className="w-10 h-10 shrink-0 rounded-full bg-[#C5A059] flex items-center justify-center text-[#003366] font-black uppercase border border-white/10 shadow-inner">
-                {session?.user?.name?.charAt(0) || "U"}
-              </div>
-            )}
-
+              ) : (
+                <div className="w-full h-full rounded-full bg-[#C5A059] flex items-center justify-center text-[#003366] font-black text-base border border-white/10 uppercase">
+                  {session?.user?.name?.charAt(0) || "U"}
+                </div>
+              )}
+            </div>
             <div className="overflow-hidden">
-              <p className="text-sm font-bold truncate text-white leading-tight">
-                {session?.user?.name}
+              <p className="text-[11px] font-black truncate text-white uppercase tracking-tight leading-tight">
+                {session?.user?.name || "User Name"}
               </p>
-              <p className="text-[9px] text-slate-400 truncate uppercase tracking-tighter font-black mt-0.5 opacity-60">
+              <p className="text-[9px] text-slate-400 truncate font-bold mt-0.5 opacity-80 italic">
                 {session?.user?.email}
+              </p>
+              <p className="text-[8px] text-[#C5A059] font-black uppercase tracking-[0.1em] mt-1 opacity-90">
+                {userType || userRole}
               </p>
             </div>
           </div>
 
           <button
             onClick={() => signOut({ callbackUrl: "/" })}
-            className="flex items-center gap-3 w-full px-4 py-3 text-red-400 hover:bg-red-500/10 rounded-xl transition-all font-bold uppercase text-[10px] tracking-widest group"
+            className="flex items-center justify-center gap-2 w-full py-2.5 bg-[#003366]/40 hover:bg-red-500/10 text-red-400 border border-white/5 rounded-xl transition-all font-black uppercase text-[9px] tracking-widest group"
           >
             <LogOut
-              size={18}
+              size={14}
               className="group-hover:-translate-x-1 transition-transform"
             />
             Logout
@@ -234,7 +241,15 @@ export default function Sidebar() {
         </div>
       </aside>
 
-      <div className="h-16 md:hidden" />
+      <style jsx>{`
+        .no-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .no-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
     </>
   );
 }
